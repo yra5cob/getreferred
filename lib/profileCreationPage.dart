@@ -31,6 +31,13 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   String _character;
   List<Map> colleges = [];
   List<Map> companies = [];
+  Yes_No_type sixDaysState;
+  Yes_No_type handledTeamState;
+  Yes_No_type usaPermitState;
+  Yes_No_type relocateState;
+  Yes_No_type earlyStartupState;
+  Travel_type willingnessTravelState;
+
   final TextEditingController _firstNameCtrl = new TextEditingController();
 
   final TextEditingController _lastNameCtrl = new TextEditingController();
@@ -101,6 +108,12 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
     _searchfunctionalarea.text = _profile.getFunctionalArea;
     _dob_ctrl.text =
         _profile.getDob == null ? "" : formatter.format(_profile.getDob);
+    Yes_No_type sixDaysState = _profile.six_days_week;
+    Yes_No_type handledTeamState = _profile.handled_team;
+    Yes_No_type usaPermitState = _profile.usa_premit;
+    Yes_No_type relocateState = _profile.getRelocate;
+    Yes_No_type earlyStartupState = _profile.getEarlyStartup;
+    Travel_type willingnessTravelState = _profile.getWillingnessTravel;
   }
 
   Future getImage() async {
@@ -1093,20 +1106,208 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   }
 
   Widget _additionalInfo(BuildContext context) {
-    return Column(children: <Widget>[
-      ListTile(
-        title: const Text('Lafayette'),
-        leading: Radio(
-          value: "",
-          groupValue: _character,
-          onChanged: (String value) {
-            setState(() {
-              _character = value;
-            });
-          },
-        ),
-      ),
-    ]);
+    return ListView(
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        children: <Widget>[
+          Card(
+              child: Container(
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text("Have you handled a team?"),
+                        Row(children: [
+                          Text("Yes"),
+                          RadioGroup(
+                            value: Yes_No_type.Yes,
+                            groupValue: handledTeamState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                handledTeamState = value;
+                              });
+                            },
+                          ),
+                          Text("No"),
+                          RadioGroup(
+                            value: Yes_No_type.No,
+                            groupValue: handledTeamState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                handledTeamState = value;
+                              });
+                            },
+                          )
+                        ])
+                      ]))),
+          Card(
+              child: Container(
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text("Are you willing to work 6 days a week?"),
+                        Row(children: [
+                          Text("Yes"),
+                          RadioGroup(
+                            value: Yes_No_type.Yes,
+                            groupValue: sixDaysState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                sixDaysState = value;
+                              });
+                            },
+                          ),
+                          Text("No"),
+                          RadioGroup(
+                            value: Yes_No_type.No,
+                            groupValue: sixDaysState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                sixDaysState = value;
+                              });
+                            },
+                          )
+                        ])
+                      ]))),
+          Card(
+              child: Container(
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text("Are you willing to relocate?"),
+                        Row(children: [
+                          Text("Yes"),
+                          RadioGroup(
+                            value: Yes_No_type.Yes,
+                            groupValue: relocateState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                relocateState = value;
+                              });
+                            },
+                          ),
+                          Text("No"),
+                          RadioGroup(
+                            value: Yes_No_type.No,
+                            groupValue: relocateState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                relocateState = value;
+                              });
+                            },
+                          )
+                        ])
+                      ]))),
+          Card(
+              child: Container(
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                            "Are you open to joining an early stage start-up?"),
+                        Row(children: [
+                          Text("Yes"),
+                          RadioGroup(
+                            value: Yes_No_type.Yes,
+                            groupValue: earlyStartupState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                earlyStartupState = value;
+                              });
+                            },
+                          ),
+                          Text("No"),
+                          RadioGroup(
+                            value: Yes_No_type.No,
+                            groupValue: earlyStartupState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                earlyStartupState = value;
+                              });
+                            },
+                          )
+                        ])
+                      ]))),
+          Card(
+              child: Container(
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text("Willingness to Travel?"),
+                        Row(children: [
+                          Text("No"),
+                          RadioGroup(
+                            value: Travel_type.No,
+                            groupValue: willingnessTravelState,
+                            onChange: (Travel_type value) {
+                              setState(() {
+                                willingnessTravelState = value;
+                              });
+                            },
+                          ),
+                          Text("Occasional"),
+                          RadioGroup(
+                            value: Travel_type.Occasional,
+                            groupValue: willingnessTravelState,
+                            onChange: (Travel_type value) {
+                              setState(() {
+                                willingnessTravelState = value;
+                              });
+                            },
+                          ),
+                          Text("Extensive"),
+                          RadioGroup(
+                            value: Travel_type.Extensive,
+                            groupValue: willingnessTravelState,
+                            onChange: (Travel_type value) {
+                              setState(() {
+                                willingnessTravelState = value;
+                              });
+                            },
+                          )
+                        ])
+                      ]))),
+          Card(
+              child: Container(
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text("Work Permit for USA"),
+                        Row(children: [
+                          Text("Yes"),
+                          RadioGroup(
+                            value: Yes_No_type.Yes,
+                            groupValue: usaPermitState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                usaPermitState = value;
+                              });
+                            },
+                          ),
+                          Text("No"),
+                          RadioGroup(
+                            value: Yes_No_type.No,
+                            groupValue: usaPermitState,
+                            onChange: (Yes_No_type value) {
+                              setState(() {
+                                usaPermitState = value;
+                              });
+                            },
+                          )
+                        ])
+                      ])))
+        ]);
   }
 
   Widget _stepper(BuildContext context) {
@@ -1233,6 +1434,25 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
           content: _additionalInfo(context),
         ),
       ],
+    );
+  }
+}
+
+class RadioGroup extends StatelessWidget {
+  final groupValue;
+  final value;
+  final onChange;
+
+  const RadioGroup({this.groupValue, this.value, this.onChange});
+
+  @override
+  Widget build(BuildContext context) {
+    return Radio(
+      value: value,
+      groupValue: groupValue,
+      onChanged: (value) {
+        onChange(value);
+      },
     );
   }
 }

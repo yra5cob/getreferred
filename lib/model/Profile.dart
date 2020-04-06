@@ -169,6 +169,8 @@ class Profile with ChangeNotifier {
     notifyListeners();
   }
 
+  List<Language> languages = [];
+
   List<College> getCollegeList() {
     return _college_list;
   }
@@ -306,6 +308,25 @@ class Company {
     this._to = _to;
     this._current_company = _current_company;
   }
+}
+
+class Language {
+  String name;
+  String get getName => name;
+
+  set setName(String name) => this.name = name;
+  bool read;
+  bool get getRead => read;
+
+  set setRead(bool read) => this.read = read;
+  bool write;
+  bool get getWrite => write;
+
+  set setWrite(bool write) => this.write = write;
+  bool speak;
+  bool get getSpeak => speak;
+
+  set setSpeak(bool speak) => this.speak = speak;
 }
 
 enum Yes_No_type { Yes, No }
