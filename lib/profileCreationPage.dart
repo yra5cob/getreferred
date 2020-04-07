@@ -8,7 +8,6 @@ import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:flutter_country_picker/flutter_country_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -29,6 +28,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   Gender genderState;
   Country countryCode;
   String _character;
+  List<Map> languages = [];
   List<Map> colleges = [];
   List<Map> companies = [];
   Yes_No_type sixDaysState;
@@ -96,6 +96,16 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
       _college[ProfileConstants.COLLEGE_TO] = c.to;
       colleges.add(_college);
     });
+
+    _profile.getLanguages.forEach((Language l) {
+      Map language = {};
+      language[ProfileConstants.LANGUAGE_NAME] =
+          new TextEditingController(text: l.name);
+      language[ProfileConstants.LANGUAGE_READ] = l.read;
+      language[ProfileConstants.LANGUAGE_WRITE] = l.write;
+      language[ProfileConstants.LANGUAGE_SPEAK] = l.speak;
+      languages.add(language);
+    });
     genderState = _profile.getGender;
     countryCode = _profile.getCountryCode;
     _firstNameCtrl.text = _profile.firstname;
@@ -125,18 +135,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
     });
   }
 
-  Future uploadPic(BuildContext context) async {
-    String fileName = path.basename(_image.path);
-    StorageReference firebaseStorageRef =
-        FirebaseStorage.instance.ref().child(fileName);
-    StorageUploadTask uploadTask = firebaseStorageRef.putFile(_image);
-    StorageTaskSnapshot taskSnapshot = await uploadTask.onComplete;
-    setState(() {
-      print("Profile Picture uploaded");
-      Scaffold.of(context)
-          .showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
-    });
-  }
+  Future uploadPic(BuildContext context) async {}
 
   @override
   Widget build(BuildContext context) {
@@ -1306,8 +1305,166 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                             },
                           )
                         ])
-                      ])))
+                      ]))),
         ]);
+  }
+
+  Widget _languageWidget(BuildContext context) {
+    return Container(
+      child: Container(
+        padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          ListView.builder(
+              shrinkWrap: true,
+              itemCount: languages.length,
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (BuildContext ctxt, int index) {
+                return Container(
+                    margin: EdgeInsets.only(top: 5, bottom: 5),
+                    padding: EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(children: <Widget>[
+                          Expanded(
+                              child: TextField(
+                            decoration:
+                                InputDecoration(hintText: "Search language"),
+                            controller: languages[index]
+                                [ProfileConstants.LANGUAGE_NAME],
+                            readOnly: true,
+                            onTap: () {
+                              final r = Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AutoCompleteScreen(
+                                    lst: ["Tamil", "English", "Hindi"],
+                                    hint: "Search Language",
+                                    textctrl: (String s) => {},
+                                  ),
+                                ),
+                              );
+                              r.then((r) {
+                                String s = r as String;
+                                setState(() {
+                                  languages[index]
+                                          [ProfileConstants.LANGUAGE_NAME]
+                                      .text = s;
+                                });
+                              });
+                            },
+                          )),
+                          RawMaterialButton(
+                            onPressed: () {
+                              setState(() {
+                                Map item = languages.removeAt(index);
+                              });
+                            },
+                            child: new Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                            shape: new CircleBorder(),
+                            elevation: 2.0,
+                            fillColor: Colors.red,
+                            padding: const EdgeInsets.all(0.0),
+                          )
+                        ]),
+                        CheckboxListTile(
+                          title: Text("Speak"),
+                          value: languages[index]
+                                      [ProfileConstants.LANGUAGE_SPEAK] ==
+                                  null
+                              ? false
+                              : languages[index]
+                                  [ProfileConstants.LANGUAGE_SPEAK],
+                          onChanged: (newValue) {
+                            setState(() {
+                              languages[index]
+                                  [ProfileConstants.LANGUAGE_SPEAK] = newValue;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity
+                              .leading, //  <-- leading Checkbox
+                        ),
+                        CheckboxListTile(
+                          title: Text("Read"),
+                          value: languages[index]
+                                      [ProfileConstants.LANGUAGE_READ] ==
+                                  null
+                              ? false
+                              : languages[index]
+                                  [ProfileConstants.LANGUAGE_READ],
+                          onChanged: (newValue) {
+                            setState(() {
+                              languages[index][ProfileConstants.LANGUAGE_READ] =
+                                  newValue;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity
+                              .leading, //  <-- leading Checkbox
+                        ),
+                        CheckboxListTile(
+                          title: Text("Write"),
+                          value: languages[index]
+                                      [ProfileConstants.LANGUAGE_WRITE] ==
+                                  null
+                              ? false
+                              : languages[index]
+                                  [ProfileConstants.LANGUAGE_WRITE],
+                          onChanged: (newValue) {
+                            setState(() {
+                              languages[index]
+                                  [ProfileConstants.LANGUAGE_WRITE] = newValue;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity
+                              .leading, //  <-- leading Checkbox
+                        ),
+                      ],
+                    ));
+              }),
+          Row(children: <Widget>[
+            Expanded(
+                child: Divider(
+              color: Colors.black,
+            )),
+            RawMaterialButton(
+              onPressed: () {
+                setState(() {
+                  int index = languages.length;
+                  Map _language = {};
+                  _language[ProfileConstants.LANGUAGE_NAME] =
+                      new TextEditingController(text: '');
+                  _language[ProfileConstants.LANGUAGE_READ] = false;
+                  _language[ProfileConstants.LANGUAGE_WRITE] = false;
+                  _language[ProfileConstants.LANGUAGE_SPEAK] = false;
+                  languages.add(_language);
+                });
+              },
+              child: new Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 18.0,
+              ),
+              shape: new CircleBorder(),
+              elevation: 2.0,
+              fillColor: Colors.blue,
+              padding: const EdgeInsets.all(0.0),
+            ),
+            Expanded(
+                child: Divider(
+              color: Colors.black,
+            ))
+          ])
+        ]),
+      ),
+    );
   }
 
   Widget _stepper(BuildContext context) {
@@ -1396,7 +1553,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             ));
       },
       onStepContinue: () {
-        if (_currentStep >= 4) return;
+        if (_currentStep >= 5) return;
         setState(() {
           _currentStep += 1;
         });
@@ -1428,6 +1585,10 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
         Step(
           title: Text('Resume'),
           content: new Container(),
+        ),
+        Step(
+          title: Text('Languages'),
+          content: _languageWidget(context),
         ),
         Step(
           title: Text('Additional Information'),

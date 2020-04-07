@@ -14,4 +14,8 @@ class ProfileConstants {
       "collegeFieldOfStduyController";
   static const String COLLEGE_FROM = "collegeFrom";
   static const String COLLEGE_TO = "collegeTo";
+  static const String LANGUAGE_NAME = "languageName";
+  static const String LANGUAGE_READ = "languageRead";
+  static const String LANGUAGE_WRITE = "languageWrite";
+  static const String LANGUAGE_SPEAK = "languageSpeak";
 }

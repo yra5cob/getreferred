@@ -23,9 +23,13 @@ dependencies:
   dropdown_formfield: ^0.1.1
   flutter_country_picker: ^0.1.6
   flutter_typeahead: ^1.8.0
-  firebase_storage: ^2.1.0+1
+  email_validator: '^1.0.0'
+  firebase_auth: ^0.15.5+3
+  google_sign_in: ^4.4.0
   font_awesome_flutter: ^8.2.0
   image_picker: ^0.5.3+1
+  firebase_core: ^0.4.0+9
+  firebase_analytics: ^5.0.2
   intl: ^0.16.1
   provider: ^4.0.4
   flutter:

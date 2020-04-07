@@ -169,7 +169,19 @@ class Profile with ChangeNotifier {
     notifyListeners();
   }
 
-  List<Language> languages = [];
+  List<Language> languages = [new Language()];
+
+  void addLanguage(Language l) {
+    languages.add(l);
+    notifyListeners();
+  }
+
+  void removeLanguage(int i) {
+    languages.removeAt(i);
+    notifyListeners();
+  }
+
+  List<Language> get getLanguages => languages;
 
   List<College> getCollegeList() {
     return _college_list;
@@ -311,19 +323,19 @@ class Company {
 }
 
 class Language {
-  String name;
+  String name = '';
   String get getName => name;
 
   set setName(String name) => this.name = name;
-  bool read;
+  bool read = false;
   bool get getRead => read;
 
   set setRead(bool read) => this.read = read;
-  bool write;
+  bool write = false;
   bool get getWrite => write;
 
   set setWrite(bool write) => this.write = write;
-  bool speak;
+  bool speak = false;
   bool get getSpeak => speak;
 
   set setSpeak(bool speak) => this.speak = speak;

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "846339160744",
+    "firebase_url": "https://referrall.firebaseio.com",
+    "project_id": "referrall",
+    "storage_bucket": "referrall.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846339160744:android:5b47be9a4866e11264a09d",
+        "android_client_info": {
+          "package_name": "com.hygriv.referrall"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "846339160744-o211v4s9r47t7gua1kaijucpctop4fhf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDH2cKvRlMJCv7FKBT0olLXMdEfnlzZefc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846339160744-o211v4s9r47t7gua1kaijucpctop4fhf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

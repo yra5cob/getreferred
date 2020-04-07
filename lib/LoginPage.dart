@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:getreferred/registerPage.dart';
+import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:email_validator/email_validator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:getreferred/profileCreationPage.dart';
 
 final globalKey = GlobalKey<ScaffoldState>();
+
+final _loginFormKey = GlobalKey<FormState>();
 
 class LoginPage extends StatefulWidget {
   @override
@@ -10,6 +17,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  String _email;
+  String _password;
+  bool _autoValidate = false;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,40 +60,36 @@ class _LoginPageState extends State<LoginPage> {
               ), //textstyle
             ),
           ), //padding
-          Padding(
-              padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
-              child: Material(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50.0)),
-                elevation: 2.0,
-                shadowColor: Color(0xff000000),
-                child: TextField(
-                    obscureText: false,
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.only(
-                          left: 15, bottom: 11, top: 11, right: 15),
-                      border: InputBorder.none,
-                      labelText: 'Email',
-                    )), //Textfiled
-              ) //Material
-              ), //Padding
-          Padding(
-              padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
-              child: Material(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50.0)),
-                elevation: 2.0,
-                shadowColor: Color(0xff000000),
-                child: TextField(
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.only(
-                          left: 15, bottom: 11, top: 11, right: 15),
-                      border: InputBorder.none,
-                      labelText: 'Password',
-                    )), //Textfiled
-              ) //Material
-              ), //Padding
+          Form(
+              key: _loginFormKey,
+              autovalidate: _autoValidate,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  CustomTextField(
+                    hint: 'Email',
+                    validator: (input) => EmailValidator.validate(input)
+                        ? null
+                        : "Enter a valid email.",
+                    onSaved: (String s) {
+                      setState(() {
+                        _email = s;
+                      });
+                    },
+                  ),
+                  CustomTextField(
+                    hint: 'Password',
+                    validator: (input) => input.isEmpty ? "*Required" : null,
+                    obsecure: true,
+                    onSaved: (String s) {
+                      setState(() {
+                        _password = s;
+                      });
+                    },
+                  ),
+                ],
+              )),
+          //Padding
           Container(
               margin: EdgeInsets.only(
                   top: 40.0,
@@ -101,8 +110,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               child: InkWell(
                   onTap: () {
-                    final snackBar = SnackBar(content: Text('Login pressed'));
-                    globalKey.currentState.showSnackBar(snackBar);
+                    _validateLoginInput();
                   },
                   child: Container(
                       color: Colors.blue,
@@ -156,8 +164,7 @@ class _LoginPageState extends State<LoginPage> {
             child: SignInButton(
               Buttons.LinkedIn,
               onPressed: () {
-                final snackBar = SnackBar(content: Text('Google login'));
-                globalKey.currentState.showSnackBar(snackBar);
+                _signInWithGoogle();
               },
             ),
           )
@@ -197,5 +204,69 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           )
                         ]))))); //scaffold
+  }
+
+  void _signInWithGoogle() async {
+    final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+    final AuthCredential credential = GoogleAuthProvider.getCredential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final FirebaseUser user =
+        (await _auth.signInWithCredential(credential)).user;
+    assert(user.email != null);
+    assert(user.displayName != null);
+    assert(!user.isAnonymous);
+    assert(await user.getIdToken() != null);
+
+    final FirebaseUser currentUser = await _auth.currentUser();
+    assert(user.uid == currentUser.uid);
+    setState(() {
+      if (user != null) {
+        // _success = true;
+        // _userID = user.uid;
+      } else {
+        // _success = false;
+      }
+    });
+  }
+
+  void _signInWithEmailAndPassword() async {
+    final FirebaseUser user = (await _auth.signInWithEmailAndPassword(
+      email: _email,
+      password: _password,
+    ))
+        .user;
+    if (user != null) {
+      setState(() {
+        // _success = true;
+        // _userEmail = user.email;
+        print("object");
+      });
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProfileCreationPage()),
+      );
+    } else {
+      print("Failed");
+      // _success = false;
+    }
+  }
+
+  void _validateLoginInput() async {
+    final FormState form = _loginFormKey.currentState;
+    if (_loginFormKey.currentState.validate()) {
+      form.save();
+      setState(() {
+        // _loading = true;
+      });
+      _signInWithEmailAndPassword();
+    } else {
+      setState(() {
+        _autoValidate = true;
+      });
+    }
   }
 }
