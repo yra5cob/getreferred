@@ -64,8 +64,36 @@ flutter:
     - assets/images/logo.png
     - assets/images/logo.jpg
     - assets/images/profile.png
+    - assets/images/google-logo.png
 
-
+  fonts:
+    - family: SpaceMonoRegular
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+    - family: SpaceMonoBold
+      fonts:
+        - asset: assets/fonts/SpaceMono-Bold.ttf
+    - family: RobotoCondensedBold
+      fonts:
+        - asset: assets/fonts/RobotoCondensed-Bold.ttf
+    - family: RobotoRegular
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+    - family: MontserratMedium
+      fonts:
+        - asset: assets/fonts/Montserrat-Medium.otf
+    - family: MontserratRegular
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.otf
+    - family: MontserratBold
+      fonts:
+        - asset: assets/fonts/Montserrat-Bold.otf
+    - family: SpaceGrotesk-Regular
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Regular.otf
+    - family: AndersonGrotesk
+      fonts:
+        - asset: assets/fonts/AndersonGrotesk.otf
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
 

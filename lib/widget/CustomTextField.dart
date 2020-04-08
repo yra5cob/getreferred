@@ -7,7 +7,15 @@ class CustomTextField extends StatelessWidget {
       this.obsecure = false,
       this.validator,
       this.onSaved,
-      this.controller});
+      this.controller,
+      this.margin,
+      this.onTap,
+      this.lines = 1,
+      this.readonly = false});
+  final int lines;
+  final EdgeInsets margin;
+  final bool readonly;
+  final Function onTap;
   final TextEditingController controller;
   final FormFieldSetter<String> onSaved;
   final Icon icon;
@@ -16,18 +24,22 @@ class CustomTextField extends StatelessWidget {
   final FormFieldValidator<String> validator;
   @override
   Widget build(BuildContext context) {
-    return Padding(
-        padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+    return Container(
+        margin: margin == null ? EdgeInsets.all(5) : margin,
         child: Material(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(50.0)),
-          elevation: 2.0,
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+          elevation: 0,
+          color: Colors.blueGrey[50],
           shadowColor: Color(0xff000000),
           child: TextFormField(
+              onTap: onTap == null ? () {} : onTap,
+              readOnly: readonly,
               onSaved: onSaved,
+              maxLines: lines,
               validator: validator,
               obscureText: obsecure,
-              autofocus: true,
+              autofocus: false,
               controller: controller,
               decoration: InputDecoration(
                 contentPadding:

@@ -25,47 +25,62 @@ class _AutoCompleteScreenState extends State<AutoCompleteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          SizedBox(
-            height: 40,
-          ),
-          TypeAheadField(
-            textFieldConfiguration: TextFieldConfiguration(
-                autofocus: true,
-                style: TextStyle(fontSize: 18, color: Colors.black),
-                decoration: InputDecoration(
-                    contentPadding:
-                        EdgeInsets.only(left: 10, bottom: 5, top: 5, right: 15),
-                    labelText: _hint,
-                    icon: Icon(Icons.search),
-                    border: new UnderlineInputBorder(
-                        borderSide: new BorderSide(color: Colors.blue)))),
-            suggestionsCallback: (pattern) {
-              final result = [];
-              _list.forEach((String f) {
-                if (f
-                    .toString()
-                    .toLowerCase()
-                    .contains(pattern.toLowerCase())) {
-                  result.add(f);
-                }
-              });
-              if (result.length == 0) {
-                return [pattern];
-              }
-              return result;
-            },
-            itemBuilder: (context, suggestion) {
-              return row(suggestion, this._textctrl, context);
-            },
-            onSuggestionSelected: (suggestion) {
-              // Navigator.of(context).push(MaterialPageRoute(
-              //     builder: (context) => ProductPage(product: suggestion)));
-            },
-          ),
-        ],
-      ),
+      body: Container(
+          padding: EdgeInsets.only(top: 20, left: 5, right: 5),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 40,
+              ),
+              Row(
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.arrow_back_ios),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  Expanded(
+                    child: TypeAheadField(
+                      textFieldConfiguration: TextFieldConfiguration(
+                          autofocus: true,
+                          style: TextStyle(fontSize: 18, color: Colors.black),
+                          decoration: InputDecoration(
+                              contentPadding: EdgeInsets.only(
+                                  left: 10, bottom: 5, top: 5, right: 15),
+                              labelText: _hint,
+                              border: new UnderlineInputBorder(
+                                  borderSide:
+                                      new BorderSide(color: Colors.white)))),
+                      suggestionsCallback: (pattern) {
+                        final result = [];
+                        _list.forEach((String f) {
+                          if (f
+                              .toString()
+                              .toLowerCase()
+                              .contains(pattern.toLowerCase())) {
+                            result.add(f);
+                          }
+                        });
+                        if (result.length == 0) {
+                          return [pattern];
+                        }
+                        return result;
+                      },
+                      itemBuilder: (context, suggestion) {
+                        return row(suggestion, this._textctrl, context);
+                      },
+                      onSuggestionSelected: (suggestion) {
+                        // Navigator.of(context).push(MaterialPageRoute(
+                        //     builder: (context) => ProductPage(product: suggestion)));
+                      },
+                    ),
+                  ),
+                  Icon(Icons.search)
+                ],
+              ),
+            ],
+          )),
     );
   }
 }
