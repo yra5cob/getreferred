@@ -1,4 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:enum_to_string/enum_to_string.dart';
+import 'package:getreferred/Home.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
+import 'package:getreferred/model/ProfileModel.dart';
 import 'package:getreferred/widget/CustomButton.dart';
 import 'package:getreferred/widget/CustomDropDown.dart';
 import 'package:getreferred/widget/CustomPhoneWidget.dart';
@@ -7,13 +12,15 @@ import 'package:getreferred/widget/CustomTouchSearch.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:getreferred/model/Profile.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'autocompeletescreen.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:flutter_country_picker/flutter_country_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_tags/flutter_tags.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -29,11 +36,8 @@ class ProfileCreationPage extends StatefulWidget {
 }
 
 class _ProfileCreationPageState extends State<ProfileCreationPage> {
-  int _currentStep = 0;
-  File _image;
   Gender genderState;
   Country countryCode;
-  String _character;
   List<Map> languages = [];
   List<Map> colleges = [];
   List<Map> companies = [];
@@ -48,6 +52,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   final TextEditingController _lastNameCtrl = new TextEditingController();
   TextEditingController _searchCurrentLocation = new TextEditingController();
   TextEditingController _phoneNumberController = new TextEditingController();
+  TextEditingController _headlineController = new TextEditingController();
   final TextEditingController _searchpreferredLocation =
       new TextEditingController();
 
@@ -56,7 +61,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   final TextEditingController _searchfunctionalarea =
       new TextEditingController();
   var formatter = new DateFormat('dd-MM-yyyy');
-  final TextEditingController _dob_ctrl = new TextEditingController();
+  TextEditingController _dob_ctrl = new TextEditingController();
 
   TextEditingController companyNameControllerTemp;
   TextEditingController companyPositionControllerTemp;
@@ -65,6 +70,20 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   String companyFromtemp;
   String companytoTemp;
   bool companyCurrentTemp;
+  DateTime dobState;
+
+  TextEditingController collegeNameControllerTemp;
+  TextEditingController collegeDegreeControllerTemp;
+  TextEditingController collegeFieldOfStudyControllerTemp;
+  Course_type collegeCourseTypeTemp;
+  String collegeFromTemp;
+  String collegeToTemp;
+
+  TextEditingController languageNameTemp;
+  bool speakTemp;
+  bool readTemp;
+  bool writeTemp;
+  String imageUrl;
 
   Future<Null> _selectDate(
       BuildContext context, DateTime getDate, Function setDate) async {
@@ -81,82 +100,196 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   @override
   void initState() {
     super.initState();
-    final _profile = Provider.of<Profile>(context, listen: false);
-    _profile.getCompanies().forEach((Company c) {
+    final _profile = Provider.of<ProfileModel>(context, listen: false);
+    _profile.getModel[ProfileConstants.CAREER].forEach((c) {
       Map _company = {};
-      _company[ProfileConstants.COMPANY_NAME_CONTROLLER] =
-          new TextEditingController(text: c.company_name);
-      _company[ProfileConstants.COMPANY_POSITION_CONTROLLER] =
-          new TextEditingController(text: c.position);
-      _company[ProfileConstants.COMPANY_LOCATION_CONTROLLER] =
-          new TextEditingController(text: c.location);
-      _company[ProfileConstants.COMPANY_IS_CURRENT] = c.current_company;
-      _company[ProfileConstants.COMPANY_EMPLOYE_TYPE] = c.getEmp_type;
-      _company[ProfileConstants.COMPANY_FROM] = c.from;
-      _company[ProfileConstants.COMPANY_TO] = c.to;
+      _company[ProfileConstants.COMPANY_NAME] =
+          c[ProfileConstants.COMPANY_NAME];
+      _company[ProfileConstants.COMPANY_POSITION] =
+          c[ProfileConstants.COMPANY_POSITION];
+      _company[ProfileConstants.COMPANY_LOCATION] =
+          c[ProfileConstants.COMPANY_LOCATION];
+      _company[ProfileConstants.COMPANY_IS_CURRENT] =
+          c[ProfileConstants.COMPANY_IS_CURRENT];
+      _company[ProfileConstants.COMPANY_EMPLOYE_TYPE] =
+          c[ProfileConstants.COMPANY_EMPLOYE_TYPE];
+      _company[ProfileConstants.COMPANY_FROM] =
+          c[ProfileConstants.COMPANY_FROM];
+      _company[ProfileConstants.COMPANY_TO] = c[ProfileConstants.COMPANY_TO];
       companies.add(_company);
     });
-    _profile.getCollegeList().forEach((College c) {
+    _profile.getModel[ProfileConstants.ACADEMICS].forEach((c) {
       Map _college = {};
-      _college[ProfileConstants.COLLEGE_NAME_CONTROLLER] =
-          new TextEditingController(text: c.college_name);
+      _college[ProfileConstants.COLLEGE_NAME] =
+          c[ProfileConstants.COLLEGE_NAME];
       _college[ProfileConstants.COLLEGE_DEGREE] =
-          new TextEditingController(text: c.getDegree);
-      _college[ProfileConstants.COLLEGE_FIELD_OF_STUDY_CONTROLLER] =
-          new TextEditingController(text: c.field_of_study);
-      _college[ProfileConstants.COLLEGE_COURSE_TYPE] = c.course_type;
-      _college[ProfileConstants.COLLEGE_FROM] = c.from;
-      _college[ProfileConstants.COLLEGE_TO] = c.to;
+          c[ProfileConstants.COLLEGE_DEGREE];
+      _college[ProfileConstants.COLLEGE_FIELD_OF_STUDY] =
+          c[ProfileConstants.COLLEGE_FIELD_OF_STUDY];
+      _college[ProfileConstants.COLLEGE_COURSE_TYPE] =
+          c[ProfileConstants.COLLEGE_COURSE_TYPE];
+      _college[ProfileConstants.COLLEGE_FROM] =
+          c[ProfileConstants.COLLEGE_FROM];
+      _college[ProfileConstants.COLLEGE_TO] = c[ProfileConstants.COLLEGE_TO];
       colleges.add(_college);
     });
 
-    _profile.getLanguages.forEach((Language l) {
+    _profile.getModel[ProfileConstants.LANGUAGE].forEach((l) {
       Map language = {};
       language[ProfileConstants.LANGUAGE_NAME] =
-          new TextEditingController(text: l.name);
-      language[ProfileConstants.LANGUAGE_READ] = l.read;
-      language[ProfileConstants.LANGUAGE_WRITE] = l.write;
-      language[ProfileConstants.LANGUAGE_SPEAK] = l.speak;
+          l[ProfileConstants.LANGUAGE_NAME];
+      language[ProfileConstants.LANGUAGE_READ] =
+          l[ProfileConstants.LANGUAGE_READ];
+      language[ProfileConstants.LANGUAGE_WRITE] =
+          l[ProfileConstants.LANGUAGE_WRITE];
+      language[ProfileConstants.LANGUAGE_SPEAK] =
+          l[ProfileConstants.LANGUAGE_SPEAK];
       languages.add(language);
     });
-    genderState = _profile.getGender;
-    countryCode = _profile.getCountryCode;
-    _firstNameCtrl.text = _profile.firstname;
-    _phoneNumberController.text =
-        _profile.phonenumber == null ? "" : _profile.phonenumber.toString();
-    _lastNameCtrl.text = _profile.lastname;
-    _searchCurrentLocation.text = _profile.getCurrentLocation;
-    _searchpreferredLocation.text = _profile.getPreferredLocation;
-    _searchindustry.text = _profile.getIndustry;
-    _searchfunctionalarea.text = _profile.getFunctionalArea;
-    _dob_ctrl.text =
-        _profile.getDob == null ? "" : formatter.format(_profile.getDob);
-    sixDaysState = _profile.six_days_week;
-    handledTeamState = _profile.handled_team;
-    usaPermitState = _profile.usa_premit;
-    relocateState = _profile.getRelocate;
-    earlyStartupState = _profile.getEarlyStartup;
-    willingnessTravelState = _profile.getWillingnessTravel;
+    genderState = EnumToString.fromString(
+        Gender.values, _profile.model[ProfileConstants.GENDER]);
+    countryCode = _profile.model[ProfileConstants.COUNTRY_CODE] == null ||
+            _profile.model[ProfileConstants.COUNTRY_CODE] == ''
+        ? null
+        : Country.findByIsoCode(_profile.model[ProfileConstants.COUNTRY_CODE]);
 
+    _firstNameCtrl.text =
+        _profile.model[ProfileConstants.NAME][ProfileConstants.FIRST_NAME];
+    _phoneNumberController.text = _profile.model[ProfileConstants.PHONE] == null
+        ? ""
+        : _profile.model[ProfileConstants.PHONE].toString();
+    _lastNameCtrl.text =
+        _profile.model[ProfileConstants.NAME][ProfileConstants.LAST_NAME];
+    _searchCurrentLocation.text =
+        _profile.model[ProfileConstants.CURRENT_LOCATION];
+    _searchpreferredLocation.text =
+        _profile.model[ProfileConstants.PREFERRED_LOCATION];
+    _searchindustry.text = _profile.model[ProfileConstants.INDUSTRY];
+    _headlineController.text = _profile.model[ProfileConstants.HEADLINE];
+    _searchfunctionalarea.text =
+        _profile.model[ProfileConstants.FUNCTIONAL_AREA];
+    dobState = _profile.model[ProfileConstants.DOB] == ''
+        ? DateTime.now()
+        : formatter.parse(_profile.model[ProfileConstants.DOB]);
+    _dob_ctrl.text = _profile.model[ProfileConstants.DOB] == ''
+        ? ""
+        : _profile.model[ProfileConstants.DOB];
+
+    sixDaysState = EnumToString.fromString(
+        Yes_No_type.values,
+        _profile.model[ProfileConstants.ADDITIONAL_INFO]
+            [ProfileConstants.SIX_DAYS_WEEK]);
+    handledTeamState = EnumToString.fromString(
+        Yes_No_type.values,
+        _profile.model[ProfileConstants.ADDITIONAL_INFO]
+            [ProfileConstants.HANDLED_TEAM]);
+    usaPermitState = EnumToString.fromString(
+        Yes_No_type.values,
+        _profile.model[ProfileConstants.ADDITIONAL_INFO]
+            [ProfileConstants.USA_PREMIT]);
+    relocateState = EnumToString.fromString(
+        Yes_No_type.values,
+        _profile.model[ProfileConstants.ADDITIONAL_INFO]
+            [ProfileConstants.RELOCATE]);
+    earlyStartupState = EnumToString.fromString(
+        Yes_No_type.values,
+        _profile.model[ProfileConstants.ADDITIONAL_INFO]
+            [ProfileConstants.EARLY_STAGE_STARTUP]);
+    willingnessTravelState = EnumToString.fromString(
+        Travel_type.values,
+        _profile.model[ProfileConstants.ADDITIONAL_INFO]
+            [ProfileConstants.TRAVEL_WILLINGNESS]);
     companyNameControllerTemp = new TextEditingController();
     companyPositionControllerTemp = new TextEditingController();
     companyLocationControllerTemp = new TextEditingController();
     companyEmpTypeTemp = null;
+    companyEmpTypeTemp = null;
     companyFromtemp = null;
-    companytoTemp = null;
     companyCurrentTemp = false;
+
+    collegeNameControllerTemp = new TextEditingController();
+    collegeDegreeControllerTemp = new TextEditingController();
+    collegeFieldOfStudyControllerTemp = new TextEditingController();
+    collegeCourseTypeTemp = null;
+    collegeFromTemp = null;
+    collegeToTemp = null;
+
+    languageNameTemp = new TextEditingController();
+    speakTemp = false;
+    readTemp = false;
+    writeTemp = false;
+    imageUrl = _profile.model[ProfileConstants.PROFILE_PIC_URL];
+    ;
   }
 
   Future getImage() async {
-    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-
-    setState(() {
-      _image = image;
-      print('Image Path $_image');
+    ImagePicker.pickImage(source: ImageSource.gallery).then((image) {
+      if (image != null)
+        _cropImage(image).then((img) {
+          if (img != null) {
+            uploadPic(context, img);
+            print('Image Path $img');
+          }
+        });
     });
   }
 
-  Future uploadPic(BuildContext context) async {}
+  Future<File> _cropImage(File img) async {
+    File croppedFile = await ImageCropper.cropImage(
+        sourcePath: img.path,
+        aspectRatioPresets: Platform.isAndroid
+            ? [
+                CropAspectRatioPreset.square,
+                CropAspectRatioPreset.ratio3x2,
+                CropAspectRatioPreset.original,
+                CropAspectRatioPreset.ratio4x3,
+                CropAspectRatioPreset.ratio16x9
+              ]
+            : [
+                CropAspectRatioPreset.original,
+                CropAspectRatioPreset.square,
+                CropAspectRatioPreset.ratio3x2,
+                CropAspectRatioPreset.ratio4x3,
+                CropAspectRatioPreset.ratio5x3,
+                CropAspectRatioPreset.ratio5x4,
+                CropAspectRatioPreset.ratio7x5,
+                CropAspectRatioPreset.ratio16x9
+              ],
+        androidUiSettings: AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Colors.green[800],
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        iosUiSettings: IOSUiSettings(
+          title: 'Crop image',
+        ));
+    if (croppedFile != null) {
+      return croppedFile;
+    } else {
+      return null;
+    }
+  }
+
+  Future uploadPic(BuildContext context, File img) async {
+    StorageReference storageReference = FirebaseStorage.instance.ref().child(
+        "profilePictures/" +
+            Provider.of<ProfileModel>(context, listen: false)
+                .model[ProfileConstants.USERNAME]);
+    final StorageUploadTask uploadTask = storageReference.putFile(img);
+    final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
+    final String url = (await downloadUrl.ref.getDownloadURL());
+    Provider.of<ProfileModel>(context, listen: false)
+        .setValue(ProfileConstants.PROFILE_PIC_URL, url);
+    setState(() {
+      imageUrl = url;
+    });
+    print("URL is $url");
+  }
+
+  String getSafeValue(item) {
+    return item == null ? '' : item;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,13 +313,77 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
           ],
         ),
         bottomNavigationBar: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
+            CustomButton(
+              label: "Skip",
+              backgroundColor: Colors.white,
+              textColor: Colors.green,
+              borderColor: Colors.green,
+              margin: EdgeInsets.all(20),
+            ),
             CustomButton(
               label: "Save and continue",
               margin: EdgeInsets.all(20),
               icon: Icons.arrow_forward_ios,
               backgroundColor: Colors.green[800],
+              onTap: () {
+                final _profile =
+                    Provider.of<ProfileModel>(context, listen: false);
+                Map<String, dynamic> model = {
+                  ProfileConstants.NAME: {
+                    ProfileConstants.FIRST_NAME: _firstNameCtrl.text,
+                    ProfileConstants.LAST_NAME: _lastNameCtrl.text,
+                  },
+                  ProfileConstants.PROFILE_PIC_URL: imageUrl,
+                  ProfileConstants.COUNTRY_CODE:
+                      countryCode == null ? null : countryCode.isoCode,
+                  ProfileConstants.PHONE: _phoneNumberController.text,
+                  ProfileConstants.DOB: _dob_ctrl.text,
+                  ProfileConstants.GENDER:
+                      getSafeValue(EnumToString.parseCamelCase(genderState)),
+                  ProfileConstants.CURRENT_LOCATION:
+                      _searchCurrentLocation.text,
+                  ProfileConstants.PREFERRED_LOCATION:
+                      _searchpreferredLocation.text,
+                  ProfileConstants.INDUSTRY: _searchindustry.text,
+                  ProfileConstants.FUNCTIONAL_AREA: _searchfunctionalarea.text,
+                  ProfileConstants.HEADLINE: _headlineController.text,
+                  ProfileConstants.ACADEMICS: colleges,
+                  ProfileConstants.CAREER: companies,
+                  ProfileConstants.LANGUAGE: languages,
+                  ProfileConstants.ADDITIONAL_INFO: {
+                    ProfileConstants.HANDLED_TEAM: getSafeValue(
+                        EnumToString.parseCamelCase(handledTeamState)),
+                    ProfileConstants.SIX_DAYS_WEEK:
+                        getSafeValue(EnumToString.parseCamelCase(sixDaysState)),
+                    ProfileConstants.RELOCATE: getSafeValue(
+                        EnumToString.parseCamelCase(relocateState)),
+                    ProfileConstants.EARLY_STAGE_STARTUP: getSafeValue(
+                        EnumToString.parseCamelCase(earlyStartupState)),
+                    ProfileConstants.TRAVEL_WILLINGNESS: getSafeValue(
+                        EnumToString.parseCamelCase(willingnessTravelState)),
+                    ProfileConstants.USA_PREMIT: usaPermitState == null
+                        ? ''
+                        : EnumToString.parseCamelCase(usaPermitState),
+                  },
+                };
+
+                Firestore.instance
+                    .collection('users')
+                    .document(_profile.model[ProfileConstants.USERNAME])
+                    .setData(model, merge: true)
+                    .then((onValue) {
+                  print("hello");
+                  _profile.setAll(model);
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Home(),
+                      ),
+                      ModalRoute.withName("/Home"));
+                });
+              },
             )
           ],
         ),
@@ -216,7 +413,9 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                   TextStyle(fontWeight: FontWeight.bold),
                                 )),
                         RawMaterialButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            _addCollegemodalBottomSheetMenu();
+                          },
                           child: new Icon(
                             Icons.add,
                             color: Colors.white,
@@ -268,7 +467,9 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                   TextStyle(fontWeight: FontWeight.bold),
                                 )),
                         RawMaterialButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            _addLanguagemodalBottomSheetMenu();
+                          },
                           child: new Icon(
                             Icons.add,
                             color: Colors.white,
@@ -300,22 +501,33 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
   }
 
   Widget _personalForm() {
-    final _profile = Provider.of<Profile>(context, listen: false);
-
     return Column(
       children: <Widget>[
         Row(
           children: <Widget>[
             Expanded(
               child: Divider(
-                color: Colors.black,
+                color: Colors.green,
               ),
             ),
             Stack(
               children: <Widget>[
                 CircleAvatar(
+                  backgroundColor: Colors.grey,
                   radius: 50,
-                  child: Image.asset("assets/images/profile.png"),
+                  child: ClipOval(
+                      child: imageUrl == ""
+                          ? Image.asset("assets/images/profile.png")
+                          : CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              placeholder: (context, url) =>
+                                  CircularProgressIndicator(),
+                              errorWidget: (context, url, error) =>
+                                  Icon(Icons.error),
+                              fit: BoxFit.cover,
+                              width: 100.0,
+                              height: 100.0,
+                            )),
                 ),
                 Positioned(
                     bottom: -5,
@@ -338,7 +550,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             ),
             Expanded(
                 child: Divider(
-              color: Colors.black,
+              color: Colors.green,
             ))
           ],
         ),
@@ -367,8 +579,9 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
           hint: "Date of birth",
           readonly: true,
           onTap: () {
-            _selectDate(context, _profile.getDob, (DateTime d) {
+            _selectDate(context, dobState, (DateTime d) {
               setState(() {
+                dobState = d;
                 _dob_ctrl.text = d == null ? "" : formatter.format(d);
               });
             });
@@ -384,7 +597,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
               genderState = value;
             });
           },
-          valueMap: _profile.Gender_values,
+          isEnum: true,
         ),
         CustomTouchSearch(
           hint: "Current location",
@@ -422,17 +635,18 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
         CustomTouchSearch(
           hint: "Functional area",
           list: ["Sales", "Marketing", "Operations"],
-          controller: _searchpreferredLocation,
+          controller: _searchfunctionalarea,
           readonly: true,
           onResult: (value) {
             setState(() {
-              _searchpreferredLocation.text = value;
+              _searchfunctionalarea.text = value;
             });
           },
         ),
         CustomTextField(
           hint: "Headlines",
           lines: 3,
+          controller: _headlineController,
         ),
       ],
     );
@@ -458,60 +672,184 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
     );
   }
 
+  Widget _addLanguage(int index) {
+    return Container(
+        constraints: BoxConstraints(maxWidth: double.infinity),
+        child: Stack(children: [
+          Card(
+              margin: EdgeInsets.only(
+                top: 10,
+                left: 0,
+                right: 0,
+              ),
+              child: Material(
+                  elevation: 3,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Text(
+                                  languages[index]
+                                      [ProfileConstants.LANGUAGE_NAME],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .title
+                                      .merge(TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                if (languages[index]
+                                    [ProfileConstants.LANGUAGE_SPEAK])
+                                  Text("Speak "),
+                                if (languages[index]
+                                    [ProfileConstants.LANGUAGE_READ])
+                                  Text("Read "),
+                                if (languages[index]
+                                    [ProfileConstants.LANGUAGE_WRITE])
+                                  Text("Write "),
+                              ],
+                            )
+                          ])))),
+          Align(
+            alignment: Alignment.topRight,
+            child: PopupMenuButton<int>(
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 1,
+                  child: Text("Edit"),
+                ),
+                PopupMenuItem(
+                  value: 2,
+                  child: Text("Delete"),
+                ),
+              ],
+              onCanceled: () {
+                print("You have canceled the menu.");
+              },
+              onSelected: (value) {
+                if (value == 2) {
+                  setState(() {
+                    languages.removeAt(index);
+                  });
+                }
+              },
+              icon: Icon(Icons.more_vert),
+            ),
+          )
+        ]));
+  }
+
   Widget _addJob(int index) {
     return Stack(children: [
-      Container(
-          padding: EdgeInsets.all(10),
-          constraints: BoxConstraints(minWidth: double.infinity),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.green[50],
-          ),
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      Material(
+          elevation: 3,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Text(
-                      "Amazon.in",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          companies[index][ProfileConstants.COMPANY_NAME],
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .merge(TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      "Product Manager - Full Time",
-                      style: TextStyle(fontWeight: FontWeight.w300),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          companies[index][ProfileConstants.COMPANY_POSITION] +
+                              " - " +
+                              companies[index]
+                                  [ProfileConstants.COMPANY_EMPLOYE_TYPE],
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .merge(TextStyle(fontWeight: FontWeight.w400)),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    Text("2000 - 2020",
-                        style: TextStyle(fontWeight: FontWeight.w300)),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    Icon(
-                      Icons.pin_drop,
-                      size: 15,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                            companies[index][ProfileConstants.COMPANY_FROM] +
+                                " - " +
+                                companies[index][ProfileConstants.COMPANY_TO],
+                            style: Theme.of(context)
+                                .textTheme
+                                .subhead
+                                .merge(TextStyle(fontWeight: FontWeight.w400))),
+                      ],
                     ),
-                    Text("Bangalore",
-                        style: TextStyle(fontWeight: FontWeight.w300)),
-                  ],
-                )
-              ])),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Icon(
+                          Icons.pin_drop,
+                          color: Colors.grey,
+                          size: 15,
+                        ),
+                        Text(
+                            companies[index][ProfileConstants.COMPANY_LOCATION]
+                                .text,
+                            style: Theme.of(context).textTheme.subhead.merge(
+                                TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.grey))),
+                      ],
+                    )
+                  ]))),
       Align(
         alignment: Alignment.topRight,
-        child: IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
+        child: PopupMenuButton<int>(
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 1,
+              child: Text("Edit"),
+            ),
+            PopupMenuItem(
+              value: 2,
+              child: Text("Delete"),
+            ),
+          ],
+          onCanceled: () {
+            print("You have canceled the menu.");
+          },
+          onSelected: (value) {
+            if (value == 2) {
+              AnimatedListRemovedItemBuilder builder = (context, animation) {
+                // A method to build the Card widget.
+                return new Container();
+              };
+              _professional_listKey.currentState.removeItem(index, builder);
+              companies.removeAt(index);
+            }
+          },
+          icon: Icon(Icons.more_vert),
+        ),
       )
     ]);
   }
@@ -607,274 +945,98 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                     title: _addCollege(index),
                   ));
             }),
-        Row(children: <Widget>[
-          Expanded(
-              child: Divider(
-            color: Colors.black,
-          )),
-          RawMaterialButton(
-            onPressed: () {
-              int _index = colleges.length;
-              Map _college = {};
-              _college[ProfileConstants.COLLEGE_NAME_CONTROLLER] =
-                  new TextEditingController(text: '');
-              _college[ProfileConstants.COLLEGE_FIELD_OF_STUDY_CONTROLLER] =
-                  new TextEditingController(text: '');
-              _college[ProfileConstants.COLLEGE_FROM] = null;
-              _college[ProfileConstants.COLLEGE_TO] = null;
-              _college[ProfileConstants.COLLEGE_DEGREE] =
-                  new TextEditingController(text: '');
-              _college[ProfileConstants.COLLEGE_COURSE_TYPE] = null;
-              ;
-
-              colleges.add(_college);
-
-              _educational_listKey.currentState
-                  .insertItem(_index, duration: Duration(milliseconds: 500));
-            },
-            child: new Icon(
-              Icons.add,
-              color: Colors.white,
-              size: 18.0,
-            ),
-            shape: new CircleBorder(),
-            elevation: 2.0,
-            fillColor: Colors.blue,
-            padding: const EdgeInsets.all(0.0),
-          ),
-          Expanded(
-              child: Divider(
-            color: Colors.black,
-          ))
-        ])
       ],
     );
   }
 
   Widget _addCollege(int index) {
-    return Container(
-        padding: EdgeInsets.all(0),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
-        child: Column(
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                Expanded(child: Divider(color: Colors.black)),
-                RawMaterialButton(
-                  onPressed: () {
-                    AnimatedListRemovedItemBuilder builder =
-                        (context, animation) {
-                      // A method to build the Card widget.
-                      return new Container();
-                    };
-                    _educational_listKey.currentState
-                        .removeItem(index, builder);
-                    colleges.removeAt(index);
-                  },
-                  child: new Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  shape: new CircleBorder(),
-                  elevation: 2.0,
-                  fillColor: Colors.red,
-                  padding: const EdgeInsets.all(0.0),
-                )
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-              child: Container(
-                  child: _textwithtap("College name",
-                      ctr: colleges[index]
-                          [ProfileConstants.COLLEGE_NAME_CONTROLLER],
-                      readonly: true, tap: () {
-                final r = Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AutoCompleteScreen(
-                      lst: ["Chennai", "Bangalore", "Mumbai"],
-                      hint: "Search location",
-                      textctrl: (String s) => {},
+    return Stack(children: [
+      Material(
+          elevation: 3,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          colleges[index][ProfileConstants.COLLEGE_NAME],
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .merge(TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
-                  ),
-                );
-                r.then((r) {
-                  String s = r as String;
-                  setState(() {
-                    colleges[index][ProfileConstants.COLLEGE_NAME_CONTROLLER]
-                        .text = s;
-                  });
-                });
-              })),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-              child: Container(
-                  child: _textwithtap("Degree",
-                      ctr: colleges[index][ProfileConstants.COLLEGE_DEGREE],
-                      readonly: true, tap: () {
-                final r = Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AutoCompleteScreen(
-                      lst: ["Chennai", "Bangalore", "Mumbai"],
-                      hint: "Search location",
-                      textctrl: (String s) => {},
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          colleges[index][ProfileConstants.COLLEGE_DEGREE] +
+                              " " +
+                              colleges[index]
+                                  [ProfileConstants.COLLEGE_FIELD_OF_STUDY] +
+                              " [" +
+                              colleges[index]
+                                  [ProfileConstants.COLLEGE_COURSE_TYPE] +
+                              "]",
+                          style: Theme.of(context)
+                              .textTheme
+                              .title
+                              .merge(TextStyle(fontWeight: FontWeight.w400)),
+                        ),
+                      ],
                     ),
-                  ),
-                );
-                r.then((r) {
-                  String s = r as String;
-                  setState(() {
-                    colleges[index][ProfileConstants.COLLEGE_DEGREE].text = s;
-                  });
-                });
-              })),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-              child: Container(
-                  child: _textwithtap("Field of study",
-                      ctr: colleges[index]
-                          [ProfileConstants.COLLEGE_FIELD_OF_STUDY_CONTROLLER],
-                      readonly: true, tap: () {
-                final r = Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AutoCompleteScreen(
-                      lst: ["Chennai", "Bangalore", "Mumbai"],
-                      hint: "Search location",
-                      textctrl: (String s) => {},
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                            colleges[index][ProfileConstants.COLLEGE_FROM] +
+                                " - " +
+                                colleges[index][ProfileConstants.COLLEGE_TO],
+                            style: Theme.of(context)
+                                .textTheme
+                                .subhead
+                                .merge(TextStyle(fontWeight: FontWeight.w400))),
+                      ],
                     ),
-                  ),
-                );
-                r.then((r) {
-                  String s = r as String;
-                  setState(() {
-                    colleges[index]
-                            [ProfileConstants.COLLEGE_FIELD_OF_STUDY_CONTROLLER]
-                        .text = s;
-                  });
-                });
-              })),
+                    SizedBox(
+                      height: 20,
+                    ),
+                  ]))),
+      Align(
+        alignment: Alignment.topRight,
+        child: PopupMenuButton<int>(
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 1,
+              child: Text("Edit"),
             ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(
-                    child: Padding(
-                        padding: EdgeInsets.only(
-                            left: 5, right: 5, top: 5, bottom: 5),
-                        child: _genericDropdown(
-                          DropdownButtonHideUnderline(
-                              child: DropdownButton<Course_type>(
-                            value: colleges[index]
-                                [ProfileConstants.COLLEGE_COURSE_TYPE],
-                            icon: Icon(Icons.arrow_drop_down),
-                            iconSize: 25,
-                            elevation: 3,
-                            hint: Text("Course Type"),
-                            style: TextStyle(color: Colors.black),
-                            onChanged: (Course_type newValue) {
-                              setState(() {
-                                colleges[index]
-                                        [ProfileConstants.COLLEGE_COURSE_TYPE] =
-                                    newValue;
-                              });
-                            },
-                            items: Course_type.values
-                                .map<DropdownMenuItem<Course_type>>(
-                                    (Course_type value) {
-                              return DropdownMenuItem<Course_type>(
-                                value: value,
-                                child: Text(Profile.Course_type_values[value]),
-                              );
-                            }).toList(),
-                          )),
-                        )))
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Container(
-                    padding: EdgeInsets.only(
-                        top: 10, bottom: 10, left: 5.0, right: 5.0),
-                    width: 150,
-                    child: Material(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50.0)),
-                        elevation: 2.0,
-                        shadowColor: Color(0xff000000),
-                        child: Container(
-                            padding: EdgeInsets.only(left: 20),
-                            child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                              value: colleges[index]
-                                  [ProfileConstants.COLLEGE_FROM],
-                              icon: Icon(Icons.arrow_drop_down),
-                              iconSize: 25,
-                              elevation: 3,
-                              hint: Text("From"),
-                              style: TextStyle(color: Colors.black),
-                              onChanged: (String newValue) {
-                                setState(() {
-                                  colleges[index]
-                                          [ProfileConstants.COLLEGE_FROM] =
-                                      newValue;
-                                });
-                              },
-                              items: Profile.years
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                            ))))),
-                Container(
-                    padding: EdgeInsets.only(
-                        top: 10, bottom: 10, left: 5.0, right: 5.0),
-                    width: 150,
-                    child: Material(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50.0)),
-                        elevation: 2.0,
-                        shadowColor: Color(0xff000000),
-                        child: Container(
-                            padding: EdgeInsets.only(left: 20),
-                            child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                              value: colleges[index]
-                                  [ProfileConstants.COLLEGE_TO],
-                              icon: Icon(Icons.arrow_drop_down),
-                              iconSize: 25,
-                              elevation: 3,
-                              hint: Text("To"),
-                              style: TextStyle(color: Colors.black),
-                              onChanged: (String newValue) {
-                                setState(() {
-                                  colleges[index][ProfileConstants.COLLEGE_TO] =
-                                      newValue;
-                                });
-                              },
-                              items: Profile.years
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                            ))))),
-              ],
+            PopupMenuItem(
+              value: 2,
+              child: Text("Delete"),
             ),
           ],
-        ));
+          onCanceled: () {
+            print("You have canceled the menu.");
+          },
+          onSelected: (value) {
+            if (value == 2) {
+              AnimatedListRemovedItemBuilder builder = (context, animation) {
+                // A method to build the Card widget.
+                return new Container();
+              };
+              _educational_listKey.currentState.removeItem(index, builder);
+              colleges.removeAt(index);
+            }
+          },
+          icon: Icon(Icons.more_vert),
+        ),
+      )
+    ]);
   }
 
   Widget _additionalInfo(BuildContext context) {
@@ -1093,361 +1255,470 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
               itemCount: languages.length,
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (BuildContext ctxt, int index) {
-                return Container(
-                    margin: EdgeInsets.only(top: 5, bottom: 5),
-                    padding: EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(children: <Widget>[
-                          Expanded(
-                              child: TextField(
-                            decoration:
-                                InputDecoration(hintText: "Search language"),
-                            controller: languages[index]
-                                [ProfileConstants.LANGUAGE_NAME],
-                            readOnly: true,
-                            onTap: () {
-                              final r = Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AutoCompleteScreen(
-                                    lst: ["Tamil", "English", "Hindi"],
-                                    hint: "Search Language",
-                                    textctrl: (String s) => {},
-                                  ),
-                                ),
-                              );
-                              r.then((r) {
-                                String s = r as String;
-                                setState(() {
-                                  languages[index]
-                                          [ProfileConstants.LANGUAGE_NAME]
-                                      .text = s;
-                                });
-                              });
-                            },
-                          )),
-                          RawMaterialButton(
-                            onPressed: () {
-                              setState(() {
-                                Map item = languages.removeAt(index);
-                              });
-                            },
-                            child: new Icon(
-                              Icons.delete,
-                              color: Colors.white,
-                              size: 20.0,
-                            ),
-                            shape: new CircleBorder(),
-                            elevation: 2.0,
-                            fillColor: Colors.red,
-                            padding: const EdgeInsets.all(0.0),
-                          )
-                        ]),
-                        CheckboxListTile(
-                          title: Text("Speak"),
-                          value: languages[index]
-                                      [ProfileConstants.LANGUAGE_SPEAK] ==
-                                  null
-                              ? false
-                              : languages[index]
-                                  [ProfileConstants.LANGUAGE_SPEAK],
-                          onChanged: (newValue) {
-                            setState(() {
-                              languages[index]
-                                  [ProfileConstants.LANGUAGE_SPEAK] = newValue;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity
-                              .leading, //  <-- leading Checkbox
-                        ),
-                        CheckboxListTile(
-                          title: Text("Read"),
-                          value: languages[index]
-                                      [ProfileConstants.LANGUAGE_READ] ==
-                                  null
-                              ? false
-                              : languages[index]
-                                  [ProfileConstants.LANGUAGE_READ],
-                          onChanged: (newValue) {
-                            setState(() {
-                              languages[index][ProfileConstants.LANGUAGE_READ] =
-                                  newValue;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity
-                              .leading, //  <-- leading Checkbox
-                        ),
-                        CheckboxListTile(
-                          title: Text("Write"),
-                          value: languages[index]
-                                      [ProfileConstants.LANGUAGE_WRITE] ==
-                                  null
-                              ? false
-                              : languages[index]
-                                  [ProfileConstants.LANGUAGE_WRITE],
-                          onChanged: (newValue) {
-                            setState(() {
-                              languages[index]
-                                  [ProfileConstants.LANGUAGE_WRITE] = newValue;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity
-                              .leading, //  <-- leading Checkbox
-                        ),
-                      ],
-                    ));
+                return _addLanguage(index);
               }),
-          Row(children: <Widget>[
-            Expanded(
-                child: Divider(
-              color: Colors.black,
-            )),
-            RawMaterialButton(
-              onPressed: () {
-                setState(() {
-                  int index = languages.length;
-                  Map _language = {};
-                  _language[ProfileConstants.LANGUAGE_NAME] =
-                      new TextEditingController(text: '');
-                  _language[ProfileConstants.LANGUAGE_READ] = false;
-                  _language[ProfileConstants.LANGUAGE_WRITE] = false;
-                  _language[ProfileConstants.LANGUAGE_SPEAK] = false;
-                  languages.add(_language);
-                });
-              },
-              child: new Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 18.0,
-              ),
-              shape: new CircleBorder(),
-              elevation: 2.0,
-              fillColor: Colors.blue,
-              padding: const EdgeInsets.all(0.0),
-            ),
-            Expanded(
-                child: Divider(
-              color: Colors.black,
-            ))
-          ])
         ]),
       ),
     );
   }
 
   void _addJobmodalBottomSheetMenu() {
+    setState(() {
+      companyNameControllerTemp = new TextEditingController();
+      companyPositionControllerTemp = new TextEditingController();
+      companyLocationControllerTemp = new TextEditingController();
+      companyEmpTypeTemp = null;
+      companyEmpTypeTemp = null;
+      companyFromtemp = null;
+      companyCurrentTemp = false;
+    });
     showModalBottomSheet(
         context: context,
-        builder: (builder) {
-          return new BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: new Container(
-                height: MediaQuery.of(context).size.height * 0.90,
-                padding: EdgeInsets.all(10),
-                decoration: new BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: new BorderRadius.only(
-                        topLeft: const Radius.circular(40.0),
-                        topRight: const Radius.circular(40.0))),
+        builder: (context) {
+          return StatefulBuilder(builder: (BuildContext context,
+              StateSetter setState /*You can rename this!*/) {
+            return BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: new Container(
-                    child: Column(
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        Expanded(child: Divider(color: Colors.white)),
-                        RawMaterialButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: new Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 20.0,
-                          ),
-                          shape: new CircleBorder(),
-                          elevation: 2.0,
-                          fillColor: Colors.grey,
-                          padding: const EdgeInsets.all(0.0),
-                        )
-                      ],
-                    ),
-                    CustomTouchSearch(
-                      hint: "Organization name",
-                      list: ["Amazon", "Tia tech", "Sterlite Tech"],
-                      onResult: (s) {
-                        setState(() {
-                          companyNameControllerTemp.text = s;
-                        });
-                      },
-                      readonly: true,
-                      controller: companyNameControllerTemp,
-                    ),
-                    CustomTouchSearch(
-                      hint: "Designation",
-                      list: [
-                        "Product Manager",
-                        "Brand Manager",
-                        "Operation Manager"
-                      ],
-                      onResult: (s) {
-                        setState(() {
-                          companyPositionControllerTemp.text = s;
-                        });
-                      },
-                      readonly: true,
-                      controller: companyPositionControllerTemp,
-                    ),
-                    CustomDropDown(
-                      hint: "Employement Type",
-                      value: companyEmpTypeTemp,
-                      valueMap: Profile.Emp_type_values,
-                      list: Emp_type.values,
-                      onChanged: (s) {
-                        setState(() {
-                          companyEmpTypeTemp = s;
-                        });
-                      },
-                    ),
-                    CustomTouchSearch(
-                      hint: "Location",
-                      list: ["Amazon", "Tia tech", "Sterlite Tech"],
-                      onResult: (s) {
-                        setState(() {
-                          companyLocationControllerTemp.text = s;
-                        });
-                      },
-                      readonly: true,
-                      controller: companyLocationControllerTemp,
-                    ),
-                    CheckboxListTile(
-                      title: Text("Current organization"),
-                      value: companyCurrentTemp,
-                      onChanged: (newValue) {
-                        setState(() {
-                          companyCurrentTemp = newValue;
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity
-                          .leading, //  <-- leading Checkbox
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Container(
+                  height: MediaQuery.of(context).size.height * 1.2,
+                  padding: EdgeInsets.all(10),
+                  decoration: new BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: new BorderRadius.only(
+                          topLeft: const Radius.circular(40.0),
+                          topRight: const Radius.circular(40.0))),
+                  child: new Container(
+                      child: Column(
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          Expanded(child: Divider(color: Colors.white)),
+                          RawMaterialButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: new Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                            shape: new CircleBorder(),
+                            elevation: 2.0,
+                            fillColor: Colors.grey,
+                            padding: const EdgeInsets.all(0.0),
+                          )
+                        ],
+                      ),
+                      CustomTouchSearch(
+                        hint: "Organization name",
+                        list: ["Amazon", "Tia tech", "Sterlite Tech"],
+                        onResult: (s) {
+                          setState(() {
+                            companyNameControllerTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: companyNameControllerTemp,
+                      ),
+                      CustomTouchSearch(
+                        hint: "Designation",
+                        list: [
+                          "Product Manager",
+                          "Brand Manager",
+                          "Operation Manager"
+                        ],
+                        onResult: (s) {
+                          setState(() {
+                            companyPositionControllerTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: companyPositionControllerTemp,
+                      ),
+                      CustomDropDown(
+                        hint: "Employement Type",
+                        value: companyEmpTypeTemp,
+                        isEnum: true,
+                        list: Emp_type.values,
+                        onChanged: (s) {
+                          setState(() {
+                            companyEmpTypeTemp = s;
+                          });
+                        },
+                      ),
+                      CustomTouchSearch(
+                        hint: "Location",
+                        list: ["Amazon", "Tia tech", "Sterlite Tech"],
+                        onResult: (s) {
+                          setState(() {
+                            companyLocationControllerTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: companyLocationControllerTemp,
+                      ),
+                      CheckboxListTile(
+                        title: Text("Current organization"),
+                        value: companyCurrentTemp,
+                        onChanged: (newValue) {
+                          setState(() {
+                            companyCurrentTemp = newValue;
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity
+                            .leading, //  <-- leading Checkbox
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Container(
+                              padding: EdgeInsets.only(
+                                  top: 10, bottom: 10, left: 5.0, right: 5.0),
+                              width: 150,
+                              child: CustomDropDown(
+                                hint: "From",
+                                list: [],
+                                value: companyFromtemp,
+                                onChanged: (s) {
+                                  setState(() {
+                                    companyFromtemp = s;
+                                  });
+                                },
+                              )),
+                          Container(
                             padding: EdgeInsets.only(
                                 top: 10, bottom: 10, left: 5.0, right: 5.0),
                             width: 150,
                             child: CustomDropDown(
-                              hint: "From",
-                              list: Profile.years,
-                              value: companyFromtemp,
+                              hint: "To",
+                              list: [],
+                              value: companytoTemp,
                               onChanged: (s) {
                                 setState(() {
-                                  companyFromtemp = s;
+                                  companytoTemp = s;
                                 });
                               },
-                            )),
-                        Container(
-                          padding: EdgeInsets.only(
-                              top: 10, bottom: 10, left: 5.0, right: 5.0),
-                          width: 150,
-                          child: CustomDropDown(
-                            hint: "To",
-                            list: Profile.years,
-                            value: companytoTemp,
-                            onChanged: (s) {
-                              setState(() {
-                                companytoTemp = s;
-                              });
-                            },
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    CustomButton(label: "Add", icon: Icons.add)
-                  ],
-                )),
-              ));
+                        ],
+                      ),
+                      CustomButton(
+                        label: "Add",
+                        icon: Icons.add,
+                        onTap: () {
+                          setState(() {
+                            Map _company = {};
+                            _company[ProfileConstants.COMPANY_NAME] =
+                                companyNameControllerTemp.text;
+                            _company[ProfileConstants.COMPANY_POSITION] =
+                                companyPositionControllerTemp.text;
+                            _company[ProfileConstants.COMPANY_LOCATION] =
+                                companyLocationControllerTemp.text;
+                            _company[ProfileConstants.COMPANY_IS_CURRENT] =
+                                companyCurrentTemp;
+                            _company[ProfileConstants.COMPANY_EMPLOYE_TYPE] =
+                                EnumToString.parseCamelCase(companyEmpTypeTemp);
+                            _company[ProfileConstants.COMPANY_FROM] =
+                                companyFromtemp;
+                            _company[ProfileConstants.COMPANY_TO] =
+                                companytoTemp;
+                            var _index = companies.length;
+                            companies.add(_company);
+                            _professional_listKey.currentState.insertItem(
+                                _index,
+                                duration: Duration(milliseconds: 500));
+                          });
+                          Navigator.pop(context);
+                        },
+                      )
+                    ],
+                  )),
+                ));
+          });
         });
   }
 
-  Widget _stepper(BuildContext context) {
-    return Stepper(
-      physics: ClampingScrollPhysics(),
-      currentStep: _currentStep,
-      controlsBuilder: (BuildContext context,
-          {VoidCallback onStepContinue, VoidCallback onStepCancel}) {
-        return Container(
-            padding: EdgeInsets.only(top: 30),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                CustomButton(
-                  shadow: false,
-                  margin: EdgeInsets.only(right: 15),
-                  padding:
-                      EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
-                  backgroundColor: Colors.green[800],
-                  onTap: () {
-                    onStepContinue();
-                  },
-                  label: "Continue",
-                  icon: Icons.arrow_forward_ios,
-                ),
-              ],
-            ));
-      },
-      onStepContinue: () {
-        if (_currentStep >= 5) return;
-        setState(() {
-          _currentStep += 1;
+  void _addLanguagemodalBottomSheetMenu() {
+    setState(() {
+      languageNameTemp = new TextEditingController();
+      speakTemp = false;
+      readTemp = false;
+      writeTemp = false;
+    });
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (BuildContext context,
+              StateSetter setState /*You can rename this!*/) {
+            return BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: new Container(
+                  height: MediaQuery.of(context).size.height * 0.80,
+                  padding: EdgeInsets.all(10),
+                  decoration: new BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: new BorderRadius.only(
+                          topLeft: const Radius.circular(40.0),
+                          topRight: const Radius.circular(40.0))),
+                  child: new Container(
+                      child: Column(
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          Expanded(child: Divider(color: Colors.white)),
+                          RawMaterialButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: new Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                            shape: new CircleBorder(),
+                            elevation: 2.0,
+                            fillColor: Colors.grey,
+                            padding: const EdgeInsets.all(0.0),
+                          )
+                        ],
+                      ),
+                      CustomTouchSearch(
+                        hint: "Language",
+                        list: ["Amazon", "Tia tech", "Sterlite Tech"],
+                        onResult: (s) {
+                          setState(() {
+                            languageNameTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: languageNameTemp,
+                      ),
+                      CheckboxListTile(
+                        title: Text("Speak"),
+                        value: speakTemp,
+                        onChanged: (newValue) {
+                          setState(() {
+                            speakTemp = newValue;
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity
+                            .leading, //  <-- leading Checkbox
+                      ),
+                      CheckboxListTile(
+                        title: Text("Read"),
+                        value: readTemp,
+                        onChanged: (newValue) {
+                          setState(() {
+                            readTemp = newValue;
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity
+                            .leading, //  <-- leading Checkbox
+                      ),
+                      CheckboxListTile(
+                        title: Text("Write"),
+                        value: writeTemp,
+                        onChanged: (newValue) {
+                          setState(() {
+                            writeTemp = newValue;
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity
+                            .leading, //  <-- leading Checkbox
+                      ),
+                      CustomButton(
+                        label: "Add",
+                        icon: Icons.add,
+                        onTap: () {
+                          this.setState(() {
+                            Map language = {};
+                            language[ProfileConstants.LANGUAGE_NAME] =
+                                languageNameTemp.text;
+                            language[ProfileConstants.LANGUAGE_READ] = readTemp;
+                            language[ProfileConstants.LANGUAGE_WRITE] =
+                                writeTemp;
+                            language[ProfileConstants.LANGUAGE_SPEAK] =
+                                speakTemp;
+                            languages.add(language);
+                          });
+
+                          Navigator.pop(context);
+                        },
+                      )
+                    ],
+                  )),
+                ));
+          });
         });
-      },
-      onStepCancel: () {
-        if (_currentStep <= 0) return;
-        setState(() {
-          _currentStep -= 1;
+  }
+
+  void _addCollegemodalBottomSheetMenu() {
+    setState(() {
+      collegeNameControllerTemp = new TextEditingController();
+      collegeDegreeControllerTemp = new TextEditingController();
+      collegeFieldOfStudyControllerTemp = new TextEditingController();
+      collegeCourseTypeTemp = null;
+      collegeFromTemp = null;
+      collegeToTemp = null;
+    });
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (BuildContext context,
+              StateSetter setState /*You can rename this!*/) {
+            return BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: new Container(
+                  height: MediaQuery.of(context).size.height * 1.2,
+                  padding: EdgeInsets.all(10),
+                  decoration: new BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: new BorderRadius.only(
+                          topLeft: const Radius.circular(40.0),
+                          topRight: const Radius.circular(40.0))),
+                  child: new Container(
+                      child: Column(
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          Expanded(child: Divider(color: Colors.white)),
+                          RawMaterialButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: new Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                            shape: new CircleBorder(),
+                            elevation: 2.0,
+                            fillColor: Colors.grey,
+                            padding: const EdgeInsets.all(0.0),
+                          )
+                        ],
+                      ),
+                      CustomTouchSearch(
+                        hint: "College name",
+                        list: ["Amazon", "Tia tech", "Sterlite Tech"],
+                        onResult: (s) {
+                          setState(() {
+                            collegeNameControllerTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: collegeNameControllerTemp,
+                      ),
+                      CustomTouchSearch(
+                        hint: "Degree",
+                        list: [
+                          "Product Manager",
+                          "Brand Manager",
+                          "Operation Manager"
+                        ],
+                        onResult: (s) {
+                          setState(() {
+                            collegeDegreeControllerTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: collegeDegreeControllerTemp,
+                      ),
+                      CustomTouchSearch(
+                        hint: "Field of study",
+                        list: [
+                          "Product Manager",
+                          "Brand Manager",
+                          "Operation Manager"
+                        ],
+                        onResult: (s) {
+                          setState(() {
+                            collegeFieldOfStudyControllerTemp.text = s;
+                          });
+                        },
+                        readonly: true,
+                        controller: collegeFieldOfStudyControllerTemp,
+                      ),
+                      CustomDropDown(
+                        hint: "Course Type",
+                        value: collegeCourseTypeTemp,
+                        isEnum: true,
+                        list: Course_type.values,
+                        onChanged: (s) {
+                          setState(() {
+                            collegeCourseTypeTemp = s;
+                          });
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Container(
+                              padding: EdgeInsets.only(
+                                  top: 10, bottom: 10, left: 5.0, right: 5.0),
+                              width: 150,
+                              child: CustomDropDown(
+                                hint: "From",
+                                list: ["2000"],
+                                value: collegeFromTemp,
+                                onChanged: (s) {
+                                  setState(() {
+                                    collegeFromTemp = s;
+                                  });
+                                },
+                              )),
+                          Container(
+                            padding: EdgeInsets.only(
+                                top: 10, bottom: 10, left: 5.0, right: 5.0),
+                            width: 150,
+                            child: CustomDropDown(
+                              hint: "To",
+                              list: ["2000"],
+                              value: collegeToTemp,
+                              onChanged: (s) {
+                                setState(() {
+                                  collegeToTemp = s;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      CustomButton(
+                        label: "Add",
+                        icon: Icons.add,
+                        onTap: () {
+                          setState(() {
+                            Map _college = {};
+                            _college[ProfileConstants.COLLEGE_NAME] =
+                                collegeNameControllerTemp.text;
+                            _college[ProfileConstants.COLLEGE_DEGREE] =
+                                collegeDegreeControllerTemp.text;
+                            _college[ProfileConstants.COLLEGE_FIELD_OF_STUDY] =
+                                collegeFieldOfStudyControllerTemp.text;
+                            _college[ProfileConstants.COLLEGE_COURSE_TYPE] =
+                                EnumToString.parseCamelCase(
+                                    collegeCourseTypeTemp);
+                            _college[ProfileConstants.COLLEGE_FROM] =
+                                collegeFromTemp;
+                            _college[ProfileConstants.COLLEGE_TO] =
+                                collegeToTemp;
+                            var _index = colleges.length;
+                            colleges.add(_college);
+                            _educational_listKey.currentState.insertItem(_index,
+                                duration: Duration(milliseconds: 500));
+                          });
+                          Navigator.pop(context);
+                        },
+                      )
+                    ],
+                  )),
+                ));
+          });
         });
-      },
-      onStepTapped: (step) {
-        setState(() {
-          _currentStep = step;
-        });
-      },
-      steps: <Step>[
-        Step(
-          title: Text('Personal'),
-          content: _personalForm(),
-        ),
-        Step(
-          title: Text('Educational details'),
-          content: _educational(),
-        ),
-        Step(
-          title: Text('Career'),
-          content: _profession(),
-        ),
-        Step(
-          title: Text('Resume'),
-          content: new Container(),
-        ),
-        Step(
-          title: Text('Languages'),
-          content: _languageWidget(context),
-        ),
-        Step(
-          title: Text('Additional Information'),
-          content: _additionalInfo(context),
-        ),
-      ],
-    );
   }
 }
 

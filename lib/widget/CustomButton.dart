@@ -9,20 +9,24 @@ class CustomButton extends StatelessWidget {
   final EdgeInsets margin;
   final Color borderColor;
   final Image image;
+  final double fontSize;
   final bool shadow;
   final EdgeInsets padding;
 
-  CustomButton(
-      {this.onTap,
-      this.padding,
-      this.image,
-      this.label,
-      this.icon,
-      this.backgroundColor,
-      this.textColor,
-      this.margin,
-      this.borderColor,
-      this.shadow = true});
+  CustomButton({
+    Key key,
+    this.onTap,
+    this.backgroundColor,
+    this.label,
+    this.icon,
+    this.textColor,
+    this.margin,
+    this.borderColor,
+    this.image,
+    this.fontSize = 14,
+    this.shadow = true,
+    this.padding,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +66,13 @@ class CustomButton extends StatelessWidget {
                         label,
                         style: TextStyle(
                             color: textColor == null ? Colors.white : textColor,
-                            fontSize: 18),
+                            fontSize: fontSize),
                       ),
                       if (icon != null)
                         Icon(
                           icon == null ? Icons.arrow_forward_ios : icon,
                           color: textColor == null ? Colors.white : textColor,
-                          size: 18.0,
+                          size: fontSize,
                         ),
                       if (image != null) SizedBox(height: 20, child: image)
                     ]))));

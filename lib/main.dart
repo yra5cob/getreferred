@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:getreferred/model/Profile.dart';
+import 'package:getreferred/BLoc/CommentsBloc.dart';
+import 'package:getreferred/BLoc/CommentsProvider.dart';
+import 'package:getreferred/BLoc/FeedProvider.dart';
+import 'package:getreferred/BLoc/MyReferralFeedProvider.dart';
+import 'package:getreferred/BLoc/ReferralRequestProvider.dart';
+import 'package:getreferred/LoadingScreen.dart';
+import 'package:getreferred/model/ProfileModel.dart';
 import 'LoginPage.dart';
 import 'package:provider/provider.dart';
 
@@ -11,10 +17,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-        providers: [ChangeNotifierProvider(create: (context) => Profile())],
+        providers: [
+          ChangeNotifierProvider(create: (context) => ProfileModel()),
+          ChangeNotifierProvider(create: (context) => FeedProvider()),
+          ChangeNotifierProvider(create: (context) => MyReferralFeedProvider()),
+          ChangeNotifierProvider(
+              create: (context) => ReferralRequestProvider()),
+        ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Flutter Demo',
+          title: 'ReferAll',
           theme: ThemeData(
             // This is the theme of your application.
             //
@@ -27,7 +39,7 @@ class MyApp extends StatelessWidget {
             // is not restarted.
             primarySwatch: Colors.green,
           ),
-          home: LoginPage(),
+          home: LoadingScreen(),
         ));
   }
 }

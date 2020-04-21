@@ -1,3 +1,4 @@
+import 'package:enum_to_string/enum_to_string.dart';
 import 'package:flutter/material.dart';
 
 class CustomDropDown extends StatelessWidget {
@@ -6,14 +7,14 @@ class CustomDropDown extends StatelessWidget {
   final EdgeInsets margin;
   final value;
   final list;
-  final valueMap;
+  final bool isEnum;
 
   CustomDropDown(
       {this.hint,
       this.onChanged,
       this.margin,
       this.value,
-      this.valueMap,
+      this.isEnum = false,
       this.list});
 
   @override
@@ -40,7 +41,8 @@ class CustomDropDown extends StatelessWidget {
                 items: list.map<DropdownMenuItem>((value) {
                   return DropdownMenuItem(
                     value: value,
-                    child: Text(valueMap == null ? value : valueMap[value]),
+                    child: Text(
+                        isEnum ? EnumToString.parseCamelCase(value) : value),
                   );
                 }).toList(),
               )), //Textfiled
