@@ -6,6 +6,7 @@ class ReferralConstants {
   static final String NUM_APPLIED = "numApplied";
   static final String ROLE = "role";
   static final String COMPANY = "company";
+  static final String LOCATION = "location";
   static final String LEVEL = "level";
   static final String CTC = "ctc";
   static final String EXPERIENCE = "experience";

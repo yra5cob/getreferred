@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:getreferred/widget/CustomButton.dart';
 import 'package:quill_delta/quill_delta.dart';
 import 'package:zefyr/zefyr.dart';
 
@@ -29,12 +30,28 @@ class _RichEditorState extends State<RichEditor> {
     // one of its parents.
     return Scaffold(
       appBar: AppBar(
-          title: Text("JD Editor"),
-          leading: IconButton(
-              icon: Icon(Icons.done),
-              onPressed: () {
-                Navigator.pop(context, _controller);
-              })),
+        backgroundColor: Colors.white,
+        title: Text(
+          "JD Editor",
+          style: TextStyle(color: Colors.cyan),
+        ),
+        leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Colors.cyan,
+            ),
+            onPressed: () {
+              Navigator.pop(context, _controller);
+            }),
+        actions: <Widget>[
+          CustomButton(
+            label: "Done",
+            onTap: () {
+              Navigator.pop(context, _controller);
+            },
+          )
+        ],
+      ),
       body: ZefyrScaffold(
         child: ZefyrEditor(
           padding: EdgeInsets.all(16),

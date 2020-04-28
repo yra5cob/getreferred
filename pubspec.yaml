@@ -27,8 +27,11 @@ dependencies:
   email_validator: '^1.0.0'
   firebase_auth: ^0.15.5+3
   google_sign_in: ^4.4.0
+  flutter_pdfview: ^1.0.1
   font_awesome_flutter: ^8.2.0
+  line_icons: ^0.2.0
   firebase_storage: ^3.1.5
+  line_awesome_icons: ^1.0.4+2
   image_picker: ^0.5.3+1
   firebase_core: ^0.4.0+9
   cloud_firestore: ^0.13.4+2
@@ -39,6 +42,8 @@ dependencies:
   quill_delta: ^1.0.1
   flutter_markdown: ^0.3.4
   image_cropper: ^1.2.1
+  progress_hud: ^1.1.0
+  flutter_cache_manager: ^1.2.2
   file_picker: ^1.6.2
   zefyr: ^0.10.0
   flutter_secure_storage: ^3.3.2
@@ -80,8 +85,12 @@ flutter:
     - assets/images/profile.png
     - assets/images/google-logo.png
     - assets/images/banner.jpg
+    - assets/CITI.PDF
 
   fonts:
+    - family:  MyFlutterApp
+      fonts:
+        - asset: fonts/MyFlutterApp.ttf
     - family: SpaceMonoRegular
       fonts:
         - asset: assets/fonts/SpaceMono-Regular.ttf

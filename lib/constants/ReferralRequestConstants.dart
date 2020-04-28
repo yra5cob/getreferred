@@ -7,6 +7,7 @@ class ReferralRequestConstants {
   static const String REFERRAL_AUTHOR = "referralAuthor";
   static const String REQUEST_DATETIME = "requestDateTime";
   static const String LAST_ACTION = "lastAction";
+  static const String NEXT_ACTION_BY = "nextActionBy";
   static const String LAST_DATETIME = "lastDateTime";
   static const String CURRENT_STAGE = "currentStage";
   static const String ACTIONS = "actions";

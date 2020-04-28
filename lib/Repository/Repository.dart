@@ -19,19 +19,14 @@ class Repository {
       _firestoreProvider.addReferralRequest(
           referralRequestModel, notifyListeners);
 
-  Future<ReferralRequestModel> getReferralRequestModel(
-      String referralId, String userId, Function listener) async {
-    return await _firestoreProvider.getReferralRequestModel(
-        referralId, userId, listener);
-  }
-
   Future<Map<String, CommentModel>> getComments(
       String referralId, Function notifyListeners) async {
     return await _firestoreProvider.getComments(referralId, notifyListeners);
   }
 
-  Future<Map<String, ReferralModel>> getFeed(Function notifyListeners) async {
-    return await _firestoreProvider.getFeed(notifyListeners);
+  Future<Map<String, ReferralModel>> getFeed(
+      String userID, Function notifyListeners) async {
+    return await _firestoreProvider.getFeed(userID, notifyListeners);
   }
 
   Future<Map<String, ReferralModel>> getMyReferralFeed(

@@ -5,6 +5,7 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:getreferred/ForgotPassword.dart';
 import 'package:getreferred/Home.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
+import 'package:getreferred/helper/UiUtilt.dart';
 import 'package:getreferred/helper/sizeConfig.dart';
 import 'package:getreferred/model/ProfileModel.dart';
 import 'package:getreferred/registerPage.dart';
@@ -125,7 +126,7 @@ class _LoginPageState extends State<LoginPage>
                                   fontFamily: 'RobotoRegular',
                                   fontSize: SizeConfig.blockSizeHorizontal * 8,
                                   fontWeight: FontWeight.bold,
-                                  color: colorAnimation.value,
+                                  foreground: UIUtil.getTextGradient(),
                                 ), //textstyle
                               ),
                             ],
@@ -195,7 +196,6 @@ class _LoginPageState extends State<LoginPage>
                             Expanded(
                                 child: CustomButton(
                               fontSize: SizeConfig.blockSizeHorizontal * 3,
-                              backgroundColor: Colors.green[800],
                               margin: EdgeInsets.only(top: 5, bottom: 5),
                               icon: Icons.arrow_forward_ios,
                               label: "Login",
@@ -263,11 +263,11 @@ class _LoginPageState extends State<LoginPage>
                                 InkWell(
                                   child: Text(" Register",
                                       style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green[800],
-                                      )),
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          foreground:
+                                              UIUtil.getTextGradient())),
                                   onTap: () {
                                     Navigator.push(
                                       context,

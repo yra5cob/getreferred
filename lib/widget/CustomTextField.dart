@@ -57,7 +57,7 @@ class CustomTextField extends StatelessWidget {
                       contentPadding: EdgeInsets.only(
                           left: 15, bottom: 11, top: 11, right: 15),
                       border: InputBorder.none,
-                      labelText: hint,
+                      hintText: hint,
                     )),
               ),
               Container(

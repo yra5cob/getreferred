@@ -10,6 +10,8 @@ import 'package:getreferred/ReferralItem.dart';
 import 'package:getreferred/ViewProfile.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
 import 'package:getreferred/constants/ReferralConstants.dart';
+import 'package:getreferred/helper/UiUtilt.dart';
+import 'package:getreferred/helper/Util.dart';
 import 'package:getreferred/model/ProfileModel.dart';
 import 'package:getreferred/widget/CustomAppBar.dart';
 import 'package:getreferred/widget/CustomTextField.dart';
@@ -65,96 +67,84 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         preferredSize:
             Size(double.infinity, MediaQuery.of(context).padding.top + 100),
         child: Container(
-          decoration: BoxDecoration(boxShadow: [
-            BoxShadow(color: Colors.black12, spreadRadius: 5, blurRadius: 2)
-          ]),
+          color: Colors.white,
+          // decoration: BoxDecoration(boxShadow: [
+          //   BoxShadow(color: Colors.black12, spreadRadius: 5, blurRadius: 2)
+          // ]),
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).padding.top + 70,
           child: Container(
-            decoration: BoxDecoration(
-              color: Colors.green[800],
-            ),
+            // decoration: BoxDecoration(
+            //     gradient: LinearGradient(colors: [
+            //   Util.hexToColor("#2fc3cf"),
+            //   Util.hexToColor("#2d91ce")
+            // ])),
             child: Container(
                 padding: EdgeInsets.all(10),
                 margin:
                     EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                child: FittedBox(
-                  fit: BoxFit.fitWidth,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          _homeScaffoldKey.currentState.openDrawer();
-                        },
-                        child: Stack(children: <Widget>[
-                          CircleAvatar(
-                            backgroundColor: Colors.grey,
-                            radius: 20,
-                            child: ClipOval(
-                                child: _profile.getModel[
-                                            ProfileConstants.PROFILE_PIC_URL] ==
-                                        ""
-                                    ? Image.asset("assets/images/profile.png")
-                                    : CachedNetworkImage(
-                                        imageUrl: _profile.getModel[
-                                            ProfileConstants.PROFILE_PIC_URL],
-                                        placeholder: (context, url) =>
-                                            CircularProgressIndicator(),
-                                        errorWidget: (context, url, error) =>
-                                            Icon(Icons.error),
-                                        height: 40,
-                                        width: 40,
-                                        fit: BoxFit.cover,
-                                      )),
-                          ),
-                          Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                ),
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        _homeScaffoldKey.currentState.openDrawer();
+                      },
+                      child: Stack(children: <Widget>[
+                        CircleAvatar(
+                          backgroundColor: Colors.white,
+                          radius: 20,
+                          child: ClipOval(
+                              child: _profile.getModel[
+                                          ProfileConstants.PROFILE_PIC_URL] ==
+                                      ""
+                                  ? Image.asset("assets/images/profile.png")
+                                  : CachedNetworkImage(
+                                      imageUrl: "",
+                                      placeholder: (context, url) =>
+                                          CircularProgressIndicator(),
+                                      errorWidget: (context, url, error) =>
+                                          Icon(Icons.error),
+                                      height: 38,
+                                      width: 38,
+                                      fit: BoxFit.cover,
+                                    )),
+                        ),
+                        Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              height: 20,
+                              width: 20,
+                              padding: EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                              ),
+                              child: Center(
                                 child: Icon(
                                   Icons.menu,
                                   size: 15,
-                                  color: Colors.green[800],
+                                  color: Colors.cyan,
                                 ),
-                              ))
-                        ]),
-                      ),
-                      SizedBox(
-                        width: 20,
-                      ),
-                      Container(
-                        width: MediaQuery.of(context).size.width * 0.75,
-                        height: 40,
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey[100],
-                          borderRadius: BorderRadius.circular(10),
+                              ),
+                            ))
+                      ]),
+                    ),
+                    IconButton(
+                        icon: Icon(
+                          Icons.search,
+                          size: 30,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text("Search"),
-                            Icon(Icons.search)
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.navigate_before,
-                        color: Colors.transparent,
-                      ),
-                    ],
-                  ),
+                        onPressed: () {})
+                  ],
                 )),
           ),
         ),
       ),
+      backgroundColor: Colors.blueGrey[100],
       drawer: Container(
           color: Colors.white,
           margin: EdgeInsets.only(
@@ -174,21 +164,20 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                         Expanded(
                             flex: 1,
                             child: CircleAvatar(
-                                backgroundColor: Colors.grey,
-                                radius: 40,
+                                backgroundColor: Util.hexToColor("#3ea4f0"),
+                                radius: 25,
                                 child: Hero(
                                   tag: "profilePic",
                                   child: ClipOval(
                                       child: CachedNetworkImage(
-                                    imageUrl: _profile.getModel[
-                                        ProfileConstants.PROFILE_PIC_URL],
+                                    imageUrl: "",
                                     placeholder: (context, url) =>
                                         CircularProgressIndicator(),
                                     errorWidget: (context, url, error) =>
                                         Icon(Icons.error),
                                     fit: BoxFit.cover,
-                                    width: 70,
-                                    height: 70,
+                                    width: 50,
+                                    height: 50,
                                   )),
                                 ))),
                         SizedBox(
@@ -201,15 +190,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Text(
-                                  "Yeswanth Kumar",
-                                  style: TextStyle(fontSize: 20),
+                                  "Yeswanth Kumar Rajakumaran",
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.black),
                                 ),
                                 SizedBox(
-                                  height: 20,
+                                  height: 10,
                                 ),
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
                                   children: <Widget>[
                                     InkWell(
                                       onTap: () {
@@ -221,11 +209,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                         );
                                       },
                                       child: Text(
-                                        "View profile",
+                                        "View Profile",
                                         style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.green[800]),
+                                            fontSize: 14,
+                                            foreground:
+                                                UIUtil.getTextGradient()),
                                       ),
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    Text(" • "),
+                                    SizedBox(
+                                      width: 5,
                                     ),
                                     InkWell(
                                       onTap: () {
@@ -245,14 +241,22 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                       child: Text(
                                         "Log out",
                                         style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.green[800]),
+                                            fontSize: 14,
+                                            foreground:
+                                                UIUtil.getTextGradient()),
                                       ),
                                     )
                                   ],
                                 )
                               ],
-                            ))
+                            )),
+                        IconButton(
+                            icon: Icon(
+                              Icons.close,
+                              size: 35,
+                              color: Colors.black,
+                            ),
+                            onPressed: () {})
                       ],
                     ),
                     Divider(
@@ -263,9 +267,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ),
                   ],
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey[100],
-                ),
+                decoration: BoxDecoration(color: Colors.blueGrey[50]),
               ),
               ListTile(
                 title: Row(
@@ -289,81 +291,151 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           )),
       body: _mainTabContent(),
       floatingActionButton: Container(
-        height: 80.0,
-        width: 80.0,
-        child: FittedBox(
-          child: FloatingActionButton(
-              child: Icon(
-                Icons.add,
-                color: Colors.green[800],
-              ),
-              backgroundColor: Colors.white,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PostReferral()),
-                );
-              }),
-        ),
-      ),
+          height: 80.0,
+          width: 80.0,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                  offset: Offset(0, 6), blurRadius: 6, color: Colors.grey[500])
+            ],
+            gradient:
+                LinearGradient(colors: [Util.getColor1(), Util.getColor2()]),
+          ),
+          child: IconButton(
+            icon: Icon(
+              Icons.add,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => PostReferral()),
+              );
+            },
+          )),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        elevation: 15,
-        child: new Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            SizedBox(
-              width: 10,
-              height: 80,
-            ),
-            IconButton(
-              icon: Icon(Icons.home),
-              iconSize: 40,
-              color: _mainTabController.index == 0
-                  ? Colors.green[800]
-                  : Colors.green[200],
-              onPressed: () {
-                _mainTabController.index = 0;
-              },
-            ),
-            IconButton(
-              color: _mainTabController.index == 1
-                  ? Colors.green[800]
-                  : Colors.green[200],
-              icon: Icon(Icons.insert_drive_file),
-              iconSize: 40,
-              onPressed: () {
-                _mainTabController.index = 1;
-              },
-            ),
-            SizedBox(
-              width: 30,
-            ),
-            IconButton(
-              color: _mainTabController.index == 2
-                  ? Colors.green[800]
-                  : Colors.green[200],
-              icon: Icon(Icons.notifications),
-              iconSize: 40,
-              onPressed: () {
-                _mainTabController.index = 2;
-              },
-            ),
-            IconButton(
-              color: _mainTabController.index == 3
-                  ? Colors.green[800]
-                  : Colors.green[200],
-              icon: Icon(Icons.sms),
-              iconSize: 40,
-              onPressed: () {
-                _mainTabController.index = 3;
-              },
-            ),
-            SizedBox(
-              width: 10,
-            )
-          ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+            boxShadow: [BoxShadow(color: Colors.grey[400], blurRadius: 1)]),
+        child: BottomAppBar(
+          elevation: 50,
+          child: new Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              SizedBox(
+                width: 10,
+                height: 80,
+              ),
+              ShaderMask(
+                blendMode: BlendMode.srcATop,
+                shaderCallback: (bounds) => RadialGradient(
+                  center: Alignment.center,
+                  radius: 0.5,
+                  colors: [Util.getColor1(), Util.getColor2()],
+                  tileMode: TileMode.mirror,
+                ).createShader(bounds),
+                child: IconButton(
+                  icon: Icon(Icons.home),
+                  iconSize: 40,
+                  color: _mainTabController.index == 0
+                      ? Colors.green[800]
+                      : Colors.green[200],
+                  splashColor: Colors.cyan[50],
+                  onPressed: () {
+                    _mainTabController.index = 0;
+                  },
+                ),
+              ),
+              ShaderMask(
+                blendMode: BlendMode.srcATop,
+                shaderCallback: (bounds) => RadialGradient(
+                  center: Alignment.center,
+                  radius: 0.5,
+                  colors: [Util.getColor1(), Util.getColor2()],
+                  tileMode: TileMode.mirror,
+                ).createShader(bounds),
+                child: IconButton(
+                  color: _mainTabController.index == 1
+                      ? Colors.green[800]
+                      : Colors.green[200],
+                  icon: Icon(Icons.insert_drive_file),
+                  splashColor: Colors.cyan[50],
+                  iconSize: 40,
+                  onPressed: () {
+                    _mainTabController.index = 1;
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 30,
+              ),
+              Container(
+                height: 50,
+                width: 50,
+                child: Stack(
+                  children: <Widget>[
+                    ShaderMask(
+                      blendMode: BlendMode.srcATop,
+                      shaderCallback: (bounds) => RadialGradient(
+                        center: Alignment.center,
+                        radius: 0.5,
+                        colors: [Util.getColor1(), Util.getColor2()],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: IconButton(
+                        color: _mainTabController.index == 2
+                            ? Colors.green[800]
+                            : Colors.green[200],
+                        splashColor: Colors.cyan[50],
+                        icon: Icon(Icons.notifications),
+                        iconSize: 40,
+                        onPressed: () {
+                          _mainTabController.index = 2;
+                        },
+                      ),
+                    ),
+                    Container(
+                      height: 25,
+                      width: 25,
+                      decoration: BoxDecoration(
+                          color: Colors.red, shape: BoxShape.circle),
+                      child: Center(
+                        child: Text(
+                          "2",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              ShaderMask(
+                blendMode: BlendMode.srcATop,
+                shaderCallback: (bounds) => RadialGradient(
+                  center: Alignment.center,
+                  radius: 0.5,
+                  colors: [Util.getColor1(), Util.getColor2()],
+                  tileMode: TileMode.mirror,
+                ).createShader(bounds),
+                child: IconButton(
+                  color: _mainTabController.index == 3
+                      ? Colors.green[800]
+                      : Colors.green[200],
+                  splashColor: Colors.cyan[50],
+                  icon: Icon(Icons.settings),
+                  iconSize: 40,
+                  onPressed: () {
+                    _mainTabController.index = 3;
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 10,
+              )
+            ],
+          ),
         ),
       ),
     );

@@ -30,7 +30,7 @@ class CommentItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           CircleAvatar(
-            backgroundColor: Colors.green[800],
+            backgroundColor: Colors.cyan,
             radius: 25,
             child: ClipOval(
               child: CachedNetworkImage(
@@ -39,8 +39,8 @@ class CommentItem extends StatelessWidget {
                 placeholder: (context, url) => CircularProgressIndicator(),
                 errorWidget: (context, url, error) => Icon(Icons.error),
                 fit: BoxFit.cover,
-                width: 50.0,
-                height: 50.0,
+                width: 48.0,
+                height: 48.0,
               ),
             ),
           ),
@@ -56,7 +56,7 @@ class CommentItem extends StatelessWidget {
                             bottomRight: Radius.circular(15),
                             topRight: Radius.circular(15),
                           ),
-                          color: Colors.blueGrey[50]),
+                          color: Colors.cyan[50]),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -70,33 +70,36 @@ class CommentItem extends StatelessWidget {
                                         [ProfileConstants.NAME]
                                     [ProfileConstants.LAST_NAME],
                             style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold),
+                                fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           Text(
                             commentModel.getModel[CommentsConstant.USER]
                                 [ProfileConstants.HEADLINE],
                             style: TextStyle(
-                                fontWeight: FontWeight.w300, fontSize: 12),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey[500]),
                           ),
                           Text(
                             Util.readTimestamp(commentModel
                                 .getModel[CommentsConstant.DATETIME]),
                             style: TextStyle(
-                                fontWeight: FontWeight.w300, fontSize: 12),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey[500]),
                           ),
                           SizedBox(
-                            height: 20,
+                            height: 10,
                           ),
                           Text(
                             commentModel.getModel[CommentsConstant.COMMENT],
-                            style: TextStyle(color: Colors.black),
+                            style: TextStyle(fontSize: 14, height: 1.38),
                           )
                         ],
                       ),
                     ),
                     SizedBox(
-                      height: 10,
+                      height: 8,
                     ),
                     Row(
                       children: <Widget>[

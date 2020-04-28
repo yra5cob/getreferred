@@ -49,8 +49,13 @@ class FirestoreProvider {
         .document(ref.documentID)
         .snapshots()
         .listen((onData) {
-      notifyListeners();
-      referralRequestModel.setAll(onData.data);
+      if (onData.exists) {
+        notifyListeners();
+        referralRequestModel.setAll(onData.data);
+      } else {
+        notifyListeners();
+        referralRequestModel = new ReferralRequestModel();
+      }
     });
   }
 
@@ -91,7 +96,8 @@ class FirestoreProvider {
     return completer.future;
   }
 
-  Future<Map<String, ReferralModel>> getFeed(Function notifyListeners) async {
+  Future<Map<String, ReferralModel>> getFeed(
+      String userID, Function notifyListeners) async {
     Completer<Map<String, ReferralModel>> completer = new Completer();
     Map<String, ReferralModel> feedMap = {};
     _firestore
@@ -111,6 +117,9 @@ class FirestoreProvider {
           ReferralModel rm = new ReferralModel();
           rm.setAll(doc.document.data);
           rm.setFeedType = "public";
+          if (doc.type == DocumentChangeType.added) {
+            getMyRequest(rm, userID, notifyListeners);
+          }
           feedMap[rm.getModel[ReferralConstants.REFERRAL_ID]] = rm;
           notifyListeners();
         }
@@ -122,6 +131,33 @@ class FirestoreProvider {
     });
 
     return completer.future;
+  }
+
+  Future<void> getMyRequest(ReferralModel referralModel, String userID,
+      Function notifyListeners) async {
+    _firestore
+        .collection('referrals')
+        .document(referralModel.getModel[ReferralConstants.REFERRAL_ID])
+        .collection('referralRequests')
+        .where(
+            ReferralRequestConstants.REQUESTER +
+                "." +
+                ProfileConstants.USERNAME,
+            isEqualTo: userID)
+        .snapshots()
+        .listen((onData) {
+      onData.documentChanges.forEach((doc) {
+        if (doc.type == DocumentChangeType.removed) {
+          referralModel.myRequest = new ReferralRequestModel();
+          notifyListeners();
+        } else {
+          ReferralRequestModel rm = new ReferralRequestModel();
+          rm.setAll(doc.document.data);
+          referralModel.myRequest = rm;
+          notifyListeners();
+        }
+      });
+    });
   }
 
   Future<Map<String, ReferralModel>> getMyReferralFeed(
@@ -141,12 +177,14 @@ class FirestoreProvider {
           ReferralModel rm = new ReferralModel();
           rm.setAll(doc.document.data);
           feedMap.remove(rm.getModel[ReferralConstants.REFERRAL_ID]);
-
           notifyListeners();
         } else {
           ReferralModel rm = new ReferralModel();
           rm.setFeedType = "private";
           rm.setAll(doc.document.data);
+          if (doc.type == DocumentChangeType.added) {
+            getReferralRequests(rm, userID, notifyListeners);
+          }
           feedMap[rm.getModel[ReferralConstants.REFERRAL_ID]] = rm;
           notifyListeners();
         }
@@ -160,41 +198,34 @@ class FirestoreProvider {
     return completer.future;
   }
 
-  Future<ReferralRequestModel> getReferralRequestModel(
-      String referralId, String userId, Function listener) async {
-    ReferralRequestModel rqm = new ReferralRequestModel();
-    Completer<ReferralRequestModel> completer = Completer();
-    var doc = await _firestore
-        .collection("referrals")
-        .document(referralId)
+  Future<void> getReferralRequests(
+      ReferralModel referralModel, String userId, Function listener) async {
+    _firestore
+        .collection('referrals')
+        .document(referralModel.getModel[ReferralConstants.REFERRAL_ID])
         .collection("referralRequests")
-        .where(
-            ReferralRequestConstants.REQUESTER +
-                "." +
-                ProfileConstants.USERNAME,
-            isEqualTo: userId)
-        .getDocuments();
+        .orderBy(ReferralRequestConstants.REQUEST_DATETIME)
+        .snapshots()
+        .listen((onData) {
+      onData.documentChanges.forEach((doc) {
+        if (doc.document.data[ReferralRequestConstants.REQUEST_ID] != null) {
+          if (doc.type == DocumentChangeType.removed) {
+            ReferralRequestModel cm = new ReferralRequestModel();
+            cm.setAll(doc.document.data);
+            referralModel.getRequests
+                .remove(cm.getModel[ReferralRequestConstants.REQUEST_ID]);
+            listener();
+          } else {
+            ReferralRequestModel cm = new ReferralRequestModel();
+            cm.setAll(doc.document.data);
+            print(doc.document.data);
+            referralModel.getRequests[
+                cm.getModel[ReferralRequestConstants.REQUEST_ID]] = cm;
 
-    if (doc.documents.length == 1) {
-      rqm.setAll(doc.documents[0].data);
-      _firestore
-          .collection("referrals")
-          .document(referralId)
-          .collection("referralRequests")
-          .document(doc.documents[0].documentID)
-          .snapshots()
-          .listen((onData) {
-        rqm.setAll(onData.data);
-        listener();
-        if (!completer.isCompleted) {
-          completer.complete(rqm);
+            listener();
+          }
         }
-
-        print("yessss");
       });
-    } else {
-      completer.complete(rqm);
-    }
-    return completer.future;
+    });
   }
 }

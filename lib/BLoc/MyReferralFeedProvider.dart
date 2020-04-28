@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:getreferred/Repository/Repository.dart';
+import 'package:getreferred/constants/ReferralRequestConstants.dart';
 import 'package:getreferred/model/CommentModel.dart';
 import 'package:getreferred/model/ReferralModel.dart';
+import 'package:getreferred/model/ReferralRequestModel.dart';
 
 class MyReferralFeedProvider extends ChangeNotifier {
   Map<String, ReferralModel> myReferralFeedCache;

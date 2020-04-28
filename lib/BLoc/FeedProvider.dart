@@ -2,14 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:getreferred/Repository/Repository.dart';
 import 'package:getreferred/model/CommentModel.dart';
 import 'package:getreferred/model/ReferralModel.dart';
+import 'package:getreferred/model/ReferralRequestModel.dart';
 
 class FeedProvider extends ChangeNotifier {
   Map<String, ReferralModel> referralFeedCache;
   Repository _repository = new Repository();
 
-  Future<Map<String, ReferralModel>> getFeed() async {
+  Future<Map<String, ReferralModel>> getFeed(String userID) async {
     if (referralFeedCache == null)
-      referralFeedCache = await _repository.getFeed(() {
+      referralFeedCache = await _repository.getFeed(userID, () {
         notifyListeners();
       });
     return referralFeedCache;
@@ -27,5 +28,11 @@ class FeedProvider extends ChangeNotifier {
       print(cMap);
       return cMap;
     }
+  }
+
+  Future<void> addReferralRequest(ReferralRequestModel rqm) async {
+    return await _repository.addReferralRequest(rqm, () {
+      notifyListeners();
+    });
   }
 }

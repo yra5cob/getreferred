@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:getreferred/LoginPage.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
+import 'package:getreferred/helper/UiUtilt.dart';
+import 'package:getreferred/helper/Util.dart';
 import 'package:getreferred/helper/sizeConfig.dart';
 import 'package:getreferred/model/ProfileModel.dart';
 import 'package:getreferred/widget/CustomButton.dart';
@@ -16,6 +18,7 @@ import 'package:getreferred/widget/CustomTextField.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:getreferred/profileCreationPage.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
 
 final registerGlobalKey = GlobalKey<ScaffoldState>();
@@ -70,22 +73,64 @@ class _RegisterPageState extends State<RegisterPage>
   Widget build(BuildContext context) {
     return Scaffold(
         key: globalKey,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: Colors.black),
-            onPressed: () => Navigator.of(context).pop(),
+        appBar: PreferredSize(
+          preferredSize: Size(MediaQuery.of(context).size.width, 70),
+          child: SafeArea(
+            child: Container(
+              margin: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.grey, blurRadius: 6, offset: Offset(0, 1))
+                ],
+              ),
+              child: Row(
+                children: <Widget>[
+                  IconButton(
+                      icon: ShaderMask(
+                        blendMode: BlendMode.srcATop,
+                        shaderCallback: (bounds) => RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.5,
+                          colors: [Util.getColor1(), Util.getColor2()],
+                          tileMode: TileMode.mirror,
+                        ).createShader(bounds),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          size: 28.0,
+                          color: Colors.cyan,
+                        ),
+                      ),
+                      onPressed: () {}),
+                  Expanded(
+                      child: Center(
+                          child: Text(
+                    "Register",
+                    style: TextStyle(
+                        foreground: UIUtil.getTextGradient(), fontSize: 20),
+                  ))),
+                  IconButton(
+                      icon: ShaderMask(
+                        blendMode: BlendMode.srcATop,
+                        shaderCallback: (bounds) => RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.5,
+                          colors: [Util.getColor1(), Util.getColor2()],
+                          tileMode: TileMode.mirror,
+                        ).createShader(bounds),
+                        child: Icon(
+                          LineAwesomeIcons.ellipsis_v,
+                          size: 28.0,
+                          color: Colors.cyan,
+                        ),
+                      ),
+                      onPressed: () {}),
+                ],
+              ),
+            ),
           ),
-          centerTitle: true,
-          elevation: 0,
-          title: Text(
-            "Register",
-            style: TextStyle(color: Colors.black),
-          ),
-          backgroundColor: Colors.white,
-          actions: <Widget>[
-            IconButton(
-                icon: Icon(Icons.help), color: Colors.black, onPressed: () {}),
-          ],
         ),
         body: Stack(
           children: <Widget>[
@@ -198,7 +243,6 @@ class _RegisterPageState extends State<RegisterPage>
                                 ),
                                 CustomButton(
                                   label: 'Sign up',
-                                  backgroundColor: Colors.green[800],
                                   margin: EdgeInsets.only(top: 5, bottom: 5),
                                   onTap: () {
                                     _validateLoginInput();

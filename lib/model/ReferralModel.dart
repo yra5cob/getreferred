@@ -15,6 +15,7 @@ class ReferralModel extends ChangeNotifier {
       ProfileConstants.HEADLINE: ""
     },
     ReferralConstants.REFERRAL_ID: "",
+    ReferralConstants.LOCATION: "",
     ProfileConstants.USERNAME: "",
     ReferralConstants.ROLE: "",
     ReferralConstants.COMPANY: "",
@@ -34,8 +35,13 @@ class ReferralModel extends ChangeNotifier {
     ReferralConstants.HIDE: "",
   };
 
-  Map<String, ReferralRequestModel> referralRequests;
+  Map<String, ReferralRequestModel> referralRequests = {};
   Map<String, CommentModel> comments;
+  ReferralRequestModel myRequest = new ReferralRequestModel();
+  ReferralRequestModel get getMyRequest => myRequest;
+
+  set setMyRequest(ReferralRequestModel myRequest) =>
+      this.myRequest = myRequest;
 
   String feedType;
   String get getFeedType => feedType;
@@ -48,7 +54,7 @@ class ReferralModel extends ChangeNotifier {
 
   Map get getComments => this.comments;
 
-  Map get getRequest => this.referralRequests;
+  Map<String, ReferralRequestModel> get getRequests => this.referralRequests;
 
   Map get getModel => this.model;
 

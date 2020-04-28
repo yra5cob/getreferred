@@ -41,4 +41,6 @@ class ProfileConstants {
   static const String LANGUAGE_READ = "languageRead";
   static const String LANGUAGE_WRITE = "languageWrite";
   static const String LANGUAGE_SPEAK = "languageSpeak";
+  static const String RESUME = "resume";
+  static const String RESUME_URL = "resumeURL";
 }

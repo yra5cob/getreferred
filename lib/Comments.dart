@@ -14,7 +14,10 @@ import 'package:getreferred/helper/UiUtilt.dart';
 import 'package:getreferred/model/CommentModel.dart';
 import 'package:getreferred/model/ProfileModel.dart';
 import 'package:getreferred/model/ReferralModel.dart';
+import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
+
+import 'helper/Util.dart';
 
 class Comments extends StatefulWidget {
   final ReferralModel referralModel;
@@ -50,28 +53,76 @@ class _CommentsState extends State<Comments> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: UIUtil.getBackButton(context),
-        actions: <Widget>[
-          IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
-        ],
+      appBar: PreferredSize(
+        preferredSize: Size(MediaQuery.of(context).size.width, 70),
+        child: SafeArea(
+          child: Container(
+            margin: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.grey, blurRadius: 6, offset: Offset(0, 1))
+              ],
+            ),
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                    icon: ShaderMask(
+                      blendMode: BlendMode.srcATop,
+                      shaderCallback: (bounds) => RadialGradient(
+                        center: Alignment.center,
+                        radius: 0.5,
+                        colors: [Util.getColor1(), Util.getColor2()],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 28.0,
+                        color: Colors.cyan,
+                      ),
+                    ),
+                    onPressed: () {}),
+                Spacer(),
+                IconButton(
+                    icon: ShaderMask(
+                      blendMode: BlendMode.srcATop,
+                      shaderCallback: (bounds) => RadialGradient(
+                        center: Alignment.center,
+                        radius: 0.5,
+                        colors: [Util.getColor1(), Util.getColor2()],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: Icon(
+                        LineAwesomeIcons.ellipsis_v,
+                        size: 28.0,
+                        color: Colors.cyan,
+                      ),
+                    ),
+                    onPressed: () {}),
+              ],
+            ),
+          ),
+        ),
       ),
+      backgroundColor: Colors.white,
       body: Container(
         width: MediaQuery.of(context).size.width,
-        margin: EdgeInsets.symmetric(
-          horizontal: 10,
-        ),
         child: ListView(
           children: <Widget>[
             ReferralItem(
               referralModel: referralModel,
               commentPage: true,
             ),
+            Divider(
+              color: Colors.grey,
+            ),
             SizedBox(
               height: 30,
             ),
             Container(
-              margin: EdgeInsets.only(bottom: 100),
+              margin: EdgeInsets.symmetric(horizontal: 8),
               child: FutureBuilder<Map<String, CommentModel>>(
                   future: _feedProvider.getComments(
                       referralModel.getModel[ReferralConstants.REFERRAL_ID]),
@@ -82,7 +133,10 @@ class _CommentsState extends State<Comments> {
                         shrinkWrap: true,
                         children: [
                           for (var k in snapshot.data.keys)
-                            buildCommentItem(snapshot.data[k])
+                            buildCommentItem(snapshot.data[k]),
+                          SizedBox(
+                            height: 100,
+                          )
                         ],
                       );
                     } else {
@@ -99,8 +153,9 @@ class _CommentsState extends State<Comments> {
       floatingActionButton: Container(
         width: MediaQuery.of(context).size.width,
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        decoration: BoxDecoration(
-            color: Colors.white, border: Border.all(color: Colors.grey[200])),
+        decoration: BoxDecoration(boxShadow: [
+          BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(0, -2))
+        ], color: Colors.white, border: Border.all(color: Colors.grey[200])),
         child: Row(
           children: <Widget>[
             CircleAvatar(
@@ -131,7 +186,20 @@ class _CommentsState extends State<Comments> {
               ),
             )),
             IconButton(
-                icon: Icon(Icons.send),
+                icon: ShaderMask(
+                  blendMode: BlendMode.srcATop,
+                  shaderCallback: (bounds) => RadialGradient(
+                    center: Alignment.center,
+                    radius: 0.5,
+                    colors: [Util.getColor1(), Util.getColor2()],
+                    tileMode: TileMode.mirror,
+                  ).createShader(bounds),
+                  child: Icon(
+                    Icons.send,
+                    size: 28.0,
+                    color: Colors.cyan,
+                  ),
+                ),
                 onPressed: () {
                   final comment = _commentController.text;
                   setState(() {

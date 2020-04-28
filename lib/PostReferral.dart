@@ -10,6 +10,9 @@ import 'package:getreferred/MultiSelectAutocompletion.dart';
 import 'package:getreferred/autocompeletescreen.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
 import 'package:getreferred/constants/ReferralConstants.dart';
+import 'package:getreferred/helper/UiUtilt.dart';
+import 'package:getreferred/helper/Util.dart';
+import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:notus/notus.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:convert';
@@ -33,7 +36,7 @@ class PostReferral extends StatefulWidget {
 class _PostReferralState extends State<PostReferral> {
   TextEditingController roleCtrl;
   TextEditingController companyCtrl;
-  TextEditingController levelCtrl;
+
   TextEditingController ctcCtrl;
   TextEditingController expCtrl;
   String _jddata = '';
@@ -50,6 +53,8 @@ class _PostReferralState extends State<PostReferral> {
 
   /// Zefyr editor like any other input field requires a focus node.
   FocusNode _focusNode;
+
+  TextEditingController locationCtrl;
 
   /// Loads the document to be edited in Zefyr.
   NotusDocument _loadDocument() {
@@ -78,10 +83,11 @@ class _PostReferralState extends State<PostReferral> {
     _focusNode = FocusNode();
     roleCtrl = new TextEditingController(text: '');
     companyCtrl = new TextEditingController(text: '');
-    levelCtrl = new TextEditingController(text: '');
+
     ctcCtrl = new TextEditingController(text: '');
     expCtrl = new TextEditingController(text: '');
     authorNotesCtrls = new TextEditingController(text: '');
+    locationCtrl = new TextEditingController(text: '');
   }
 
   void showJdBottomSheet() {
@@ -117,41 +123,95 @@ class _PostReferralState extends State<PostReferral> {
     return item == null ? '' : item;
   }
 
-  Future uploadFile(BuildContext context, String _rid) async {
+  Future<String> uploadFile(BuildContext context, String _rid) async {
     StorageReference storageReference =
         FirebaseStorage.instance.ref().child("jd/" + _rid);
     final StorageUploadTask uploadTask = storageReference.putFile(files);
     final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
     final String url = (await downloadUrl.ref.getDownloadURL());
-    print("URL is $url");
+    return url;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          "New referral",
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: Size(MediaQuery.of(context).size.width, 70),
+        child: SafeArea(
+          child: Container(
+            margin: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.grey, blurRadius: 6, offset: Offset(0, 1))
+              ],
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            }),
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                    icon: ShaderMask(
+                      blendMode: BlendMode.srcATop,
+                      shaderCallback: (bounds) => RadialGradient(
+                        center: Alignment.center,
+                        radius: 0.5,
+                        colors: [Util.getColor1(), Util.getColor2()],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 28.0,
+                        color: Colors.cyan,
+                      ),
+                    ),
+                    onPressed: () {}),
+                Expanded(
+                    child: Center(
+                        child: Text(
+                  "New Referral",
+                  style: TextStyle(
+                      foreground: UIUtil.getTextGradient(), fontSize: 20),
+                ))),
+                IconButton(
+                    icon: ShaderMask(
+                      blendMode: BlendMode.srcATop,
+                      shaderCallback: (bounds) => RadialGradient(
+                        center: Alignment.center,
+                        radius: 0.5,
+                        colors: [Util.getColor1(), Util.getColor2()],
+                        tileMode: TileMode.mirror,
+                      ).createShader(bounds),
+                      child: Icon(
+                        LineAwesomeIcons.ellipsis_v,
+                        size: 28.0,
+                        color: Colors.cyan,
+                      ),
+                    ),
+                    onPressed: () {}),
+              ],
+            ),
+          ),
+        ),
       ),
+      floatingActionButton: Container(),
       body: Container(
         constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height,
             maxWidth: MediaQuery.of(context).size.width),
-        margin: EdgeInsets.all(10),
+        margin: EdgeInsets.all(20),
         child: ListView(
           children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Role",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
             CustomTouchSearch(
               hint: "Role",
               controller: roleCtrl,
@@ -161,6 +221,16 @@ class _PostReferralState extends State<PostReferral> {
                 });
               },
               readonly: true,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Company",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
             ),
             CustomTouchSearch(
               hint: "Company",
@@ -172,17 +242,63 @@ class _PostReferralState extends State<PostReferral> {
               },
               readonly: true,
             ),
-            CustomTextField(
-              hint: "Level",
-              controller: levelCtrl,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Location",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
+            CustomTouchSearch(
+              hint: "Location",
+              controller: locationCtrl,
+              onResult: (s) {
+                setState(() {
+                  locationCtrl.text = s;
+                });
+              },
+              readonly: true,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "CTC",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
             ),
             CustomTextField(
               hint: "CTC",
               controller: ctcCtrl,
             ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Experience",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
             CustomTextField(
               hint: "Experience",
               controller: expCtrl,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Travel Requirments",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
             ),
             CustomDropDown(
               hint: "Travel requirment",
@@ -194,6 +310,16 @@ class _PostReferralState extends State<PostReferral> {
                   travel_req = value;
                 });
               },
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "College Requirement",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
             ),
             Container(
               margin: EdgeInsets.all(5),
@@ -209,11 +335,6 @@ class _PostReferralState extends State<PostReferral> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(
-                          "College requirement",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w400, fontSize: 12),
-                        ),
                         SizedBox(
                           height: 5,
                         ),
@@ -282,9 +403,18 @@ class _PostReferralState extends State<PostReferral> {
                     },
                     label: "+",
                     shadow: false,
-                    backgroundColor: Colors.blueGrey,
                   )
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Graduation year requirement",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
               ),
             ),
             Container(
@@ -301,11 +431,6 @@ class _PostReferralState extends State<PostReferral> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(
-                          "Graduate year",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w400, fontSize: 12),
-                        ),
                         SizedBox(
                           height: 5,
                         ),
@@ -357,7 +482,6 @@ class _PostReferralState extends State<PostReferral> {
                   CustomButton(
                     label: "+",
                     shadow: false,
-                    backgroundColor: Colors.blueGrey,
                     onTap: () {
                       final r = Navigator.push(
                         context,
@@ -379,6 +503,16 @@ class _PostReferralState extends State<PostReferral> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Job Description",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
             Container(
               margin: EdgeInsets.all(5),
               padding: EdgeInsets.all(10),
@@ -390,10 +524,6 @@ class _PostReferralState extends State<PostReferral> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    "Job Description",
-                    style: TextStyle(fontWeight: FontWeight.w400, fontSize: 12),
-                  ),
                   SizedBox(
                     height: 5,
                   ),
@@ -403,7 +533,6 @@ class _PostReferralState extends State<PostReferral> {
                       controller: controller,
                       selectable: true,
                       data: _jddata,
-                      imageDirectory: 'https://raw.githubusercontent.com',
                     ),
                   ),
                   Row(
@@ -430,7 +559,6 @@ class _PostReferralState extends State<PostReferral> {
                         fontSize: 10,
                         shadow: false,
                         icon: Icons.text_fields,
-                        backgroundColor: Colors.blueGrey,
                       ),
                       CustomButton(
                         label: "Attach ",
@@ -449,11 +577,20 @@ class _PostReferralState extends State<PostReferral> {
                         fontSize: 10,
                         shadow: false,
                         icon: Icons.attach_file,
-                        backgroundColor: Colors.blueGrey,
                       ),
                     ],
                   )
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Additional Notes",
+                style: TextStyle(
+                    color: Colors.cyan,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500),
               ),
             ),
             CustomTextField(
@@ -463,7 +600,6 @@ class _PostReferralState extends State<PostReferral> {
             ),
             CustomButton(
               label: "Post",
-              backgroundColor: Colors.green[800],
               onTap: () {
                 final _profile =
                     Provider.of<ProfileModel>(context, listen: false);
@@ -489,9 +625,9 @@ class _PostReferralState extends State<PostReferral> {
                   ReferralConstants.NUM_SHARES: 0,
                   ReferralConstants.ROLE: roleCtrl.text,
                   ReferralConstants.COMPANY: companyCtrl.text,
-                  ReferralConstants.LEVEL: levelCtrl.text,
                   ReferralConstants.CTC: ctcCtrl.text,
                   ReferralConstants.EXPERIENCE: expCtrl.text,
+                  ReferralConstants.LOCATION: locationCtrl.text,
                   ReferralConstants.TRAVEL_REQ:
                       getSafeValue(EnumToString.parseCamelCase(travel_req)),
                   ReferralConstants.COLLEGE_REQ: college_req,
@@ -505,26 +641,24 @@ class _PostReferralState extends State<PostReferral> {
                   ReferralConstants.CLOSE_DATE: null,
                   ReferralConstants.HIDE: false,
                 };
-                String id;
-                Firestore.instance
-                    .collection('referrals')
-                    .add(data)
-                    .then((DocumentReference doc) {
-                  id = doc.documentID;
 
-                  Map<String, dynamic> _rid = {
-                    ReferralConstants.REFERRAL_ID: doc.documentID
-                  };
-                  doc.setData(_rid, merge: true).then((onValue) {
-                    if (jd_type == ReferralConstants.JD_TYPE_LINK) {
-                      uploadFile(context, id).then((onValue) {
-                        Navigator.pop(context);
-                      });
-                    } else {
+                DocumentReference docRef =
+                    Firestore.instance.collection('referrals').document();
+
+                data[ReferralConstants.REFERRAL_ID] = docRef.documentID;
+
+                if (jd_type == ReferralConstants.JD_TYPE_LINK) {
+                  uploadFile(context, docRef.documentID).then((onValue) {
+                    data[ReferralConstants.JD_TYPE_LINK] = onValue;
+                    docRef.setData(data).then((onValue) {
                       Navigator.pop(context);
-                    }
+                    });
                   });
-                });
+                } else {
+                  docRef.setData(data).then((onValue) {
+                    Navigator.pop(context);
+                  });
+                }
               },
             )
           ],

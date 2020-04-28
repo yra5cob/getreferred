@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:getreferred/BLoc/MyReferralFeedProvider.dart';
+import 'package:getreferred/MyReferralItem.dart';
 
 import 'package:getreferred/ReferralItem.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
+import 'package:getreferred/helper/UiUtilt.dart';
 import 'package:getreferred/model/ProfileModel.dart';
 import 'package:provider/provider.dart';
 
@@ -67,10 +69,12 @@ class _MyReferralScreenState extends State<MyReferralScreen>
                 shrinkWrap: true,
                 children: [
                   for (var k in snapshot.data.keys)
-                    ReferralItem(
+                    MyReferralItem(
                       referralModel: snapshot.data[k],
-                      commentPage: false,
                     ),
+                  SizedBox(
+                    height: 50,
+                  )
                 ]);
           }
         });
@@ -82,59 +86,51 @@ class _MyReferralScreenState extends State<MyReferralScreen>
       headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
         return <Widget>[
           SliverAppBar(
-              title: null,
-              automaticallyImplyLeading: false,
-              backgroundColor: Colors.white,
-              centerTitle: true,
-              expandedHeight: 120.0,
-              floating: true,
-              pinned: true,
-              snap: false,
-              elevation: 5,
-              flexibleSpace: FlexibleSpaceBar(
-                stretchModes: [StretchMode.zoomBackground],
-                centerTitle: false,
-                titlePadding: EdgeInsets.all(0),
-                collapseMode: CollapseMode.parallax,
-                title: Container(
-                  alignment: Alignment.centerLeft,
-                  width: MediaQuery.of(context).size.width,
-                  margin: EdgeInsets.only(bottom: 0),
-                  child: Text(
-                    "My Referrals",
-                    style: Theme.of(context).textTheme.title.merge(TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.green[900])),
+            title: Text(
+              "My Referrals",
+              style: Theme.of(context).textTheme.headline.merge(TextStyle(
+                  fontWeight: FontWeight.bold,
+                  foreground: UIUtil.getTextGradient())),
+            ),
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.white,
+            centerTitle: false,
+            expandedHeight: 105.0,
+            pinned: true,
+            floating: true,
+            snap: true,
+            elevation: 5,
+            flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.none,
+                background: Container(
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 45,
+                      ),
+                      TabBar(
+                        tabs: myReferralTabs
+                            .map((f) => Container(
+                                  padding: EdgeInsets.all(16),
+                                  child: Text(
+                                    f,
+                                    style: Theme.of(context).textTheme.title,
+                                  ),
+                                ))
+                            .toList(),
+                        controller: _myReferralTabController,
+                        indicatorColor: Colors.cyan[500],
+                        indicatorWeight: 5,
+                        labelColor: Colors.black,
+                        unselectedLabelColor: Theme.of(context).splashColor,
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              bottom: PreferredSize(
-                  preferredSize: Size.fromHeight(100),
-                  child: Container(
-                    child: Column(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 50,
-                        ),
-                        TabBar(
-                          tabs: myReferralTabs
-                              .map((f) => Tab(
-                                    text: f,
-                                  ))
-                              .toList(),
-                          controller: _myReferralTabController,
-                          indicatorColor: Colors.green[800],
-                          labelColor: Colors.black,
-                          unselectedLabelColor: Theme.of(context).splashColor,
-                        ),
-                      ],
-                    ),
-                  )))
+                )),
+          )
         ];
       },
-      body: Container(
-          color: Colors.transparent,
-          padding: EdgeInsets.only(bottom: 50),
-          child: _feedTabContent()),
+      body: Container(color: Colors.transparent, child: _feedTabContent()),
     );
   }
 }

@@ -30,6 +30,12 @@ class ReferralRequestModel extends ChangeNotifier {
     ReferralRequestConstants.CLOSE_MESSAGE: '',
   };
 
+  int pendingActions;
+  int get getPendingActions => pendingActions;
+
+  set setPendingActions(int pendingActions) =>
+      this.pendingActions = pendingActions;
+
   Map get getModel => this.model;
 
   set setModel(Map map) => this.model = model;

@@ -1,65 +1,24 @@
-import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:getreferred/ProfilePage.dart';
 import 'package:getreferred/constants/ProfileConstants.dart';
 import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/Util.dart';
 import 'package:getreferred/model/ProfileModel.dart';
 import 'package:getreferred/profileCreationPage.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
 
-class ViewProfile extends StatefulWidget {
+class ProfilePage extends StatefulWidget {
   @override
-  _ViewProfileState createState() => _ViewProfileState();
+  _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ViewProfileState extends State<ViewProfile> {
-  ScrollController _scrollController;
-  double scrollOffset = 0.0;
-  double _fontSize = 20;
-  Alignment _align = Alignment.center;
-  bool profview = true;
-  final kExpandedHeight = 300;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _scrollController = new ScrollController(initialScrollOffset: scrollOffset);
-    _scrollController.addListener(listen);
-  }
-
-  bool get _showTitle {
-    return _scrollController.hasClients &&
-        _scrollController.offset > kExpandedHeight - kToolbarHeight;
-  }
-
-  void listen() {
-    double nfs;
-    if (_scrollController.offset > 150.0) {
-      setState(() {
-        if (profview) {
-          profview = false;
-          _fontSize = 15;
-          _align = Alignment.bottomLeft;
-        }
-      });
-    } else {
-      setState(() {
-        if (!profview) {
-          profview = true;
-          _fontSize = 30;
-          _align = Alignment.center;
-        }
-      });
-    }
-  }
+class _ProfilePageState extends State<ProfilePage> {
+  static double avatarMaximumRadius = 40.0;
+  static double avatarMinimumRadius = 15.0;
+  double avatarRadius = avatarMaximumRadius;
+  double expandedHeader = 130.0;
+  double translate = -avatarMaximumRadius;
+  bool isExpanded = true;
+  double offset = 0.0;
 
   Widget _getPersonal(ProfileModel _profile) {
     return Container(
@@ -691,175 +650,205 @@ class _ViewProfileState extends State<ViewProfile> {
   @override
   Widget build(BuildContext context) {
     final _profile = Provider.of<ProfileModel>(context);
-    String getSafeValue(item) {
-      return item == null ? '' : item;
-    }
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: NotificationListener<ScrollUpdateNotification>(
+          onNotification: (scrollNotification) {
+            final pixels = scrollNotification.metrics.pixels;
 
-    Future<File> _cropImage(File img) async {
-      File croppedFile = await ImageCropper.cropImage(
-          sourcePath: img.path,
-          aspectRatioPresets: Platform.isAndroid
-              ? [
-                  CropAspectRatioPreset.square,
-                  CropAspectRatioPreset.ratio3x2,
-                  CropAspectRatioPreset.original,
-                  CropAspectRatioPreset.ratio4x3,
-                  CropAspectRatioPreset.ratio16x9
-                ]
-              : [
-                  CropAspectRatioPreset.original,
-                  CropAspectRatioPreset.square,
-                  CropAspectRatioPreset.ratio3x2,
-                  CropAspectRatioPreset.ratio4x3,
-                  CropAspectRatioPreset.ratio5x3,
-                  CropAspectRatioPreset.ratio5x4,
-                  CropAspectRatioPreset.ratio7x5,
-                  CropAspectRatioPreset.ratio16x9
-                ],
-          androidUiSettings: AndroidUiSettings(
-              toolbarTitle: 'Crop Image',
-              toolbarColor: Colors.green[800],
-              toolbarWidgetColor: Colors.white,
-              initAspectRatio: CropAspectRatioPreset.original,
-              lockAspectRatio: false),
-          iosUiSettings: IOSUiSettings(
-            title: 'Crop image',
-          ));
-      if (croppedFile != null) {
-        return croppedFile;
-      } else {
-        return null;
-      }
-    }
+            // check if scroll is vertical ( left to right OR right to left)
+            final scrollTabs = (scrollNotification.metrics.axisDirection ==
+                    AxisDirection.right ||
+                scrollNotification.metrics.axisDirection == AxisDirection.left);
 
-    Future uploadPic(BuildContext context, File img) async {
-      StorageReference storageReference = FirebaseStorage.instance.ref().child(
-          "profilePictures/" +
-              Provider.of<ProfileModel>(context, listen: false)
-                  .model[ProfileConstants.USERNAME]);
-      final StorageUploadTask uploadTask = storageReference.putFile(img);
-      final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
-      final String url = (await downloadUrl.ref.getDownloadURL());
-      Provider.of<ProfileModel>(context, listen: false)
-          .setValue(ProfileConstants.PROFILE_PIC_URL, url);
-      print("URL is $url");
-    }
+            if (!scrollTabs) {
+              // and here prevents animation of avatar when you scroll tabs
+              if (expandedHeader - pixels <= kToolbarHeight) {
+                if (isExpanded) {
+                  translate = 0.0;
+                  setState(() {
+                    isExpanded = false;
+                  });
+                }
+              } else {
+                translate = -avatarMaximumRadius + pixels;
+                if (translate > 0) {
+                  translate = 0.0;
+                }
+                if (!isExpanded) {
+                  setState(() {
+                    isExpanded = true;
+                  });
+                }
+              }
 
-    Future getImage() async {
-      ImagePicker.pickImage(source: ImageSource.gallery).then((image) {
-        if (image != null)
-          _cropImage(image).then((img) {
-            if (img != null) {
-              uploadPic(context, img);
-              print('Image Path $img');
+              offset = pixels * 0.4;
+
+              final newSize = (avatarMaximumRadius - offset);
+
+              setState(() {
+                if (newSize < avatarMinimumRadius) {
+                  avatarRadius = avatarMinimumRadius;
+                } else if (newSize > avatarMaximumRadius) {
+                  avatarRadius = avatarMaximumRadius;
+                } else {
+                  avatarRadius = newSize;
+                }
+              });
             }
-          });
-      });
-    }
-
-    List _buildList(int count) {
-      List<Widget> listItems = List();
-      listItems.addAll([
-        _getPersonal(_profile),
-        _getEducation(_profile),
-        _getCareer(_profile),
-        _getLanguage(_profile),
-        _getAdditionalInfo(_profile),
-        _resume(_profile)
-      ]);
-      return listItems;
-    }
-
-    return Scaffold(
-        body: SafeArea(
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: <Widget>[
-          SliverAppBar(
-            stretch: true,
-            centerTitle: false,
-            expandedHeight: 150.0,
-            floating: false,
-            pinned: true,
-            snap: false,
-            elevation: 5,
-            bottom: PreferredSize(
-                child: AnimatedContainer(
-                  curve: Curves.linear,
-                  alignment: _align,
-                  duration: const Duration(milliseconds: 300),
-                  padding: EdgeInsets.all(10),
-                  width: MediaQuery.of(context).size.width,
-                  child: !profview
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              _profile.getModel[ProfileConstants.NAME]
-                                      [ProfileConstants.FIRST_NAME] +
-                                  " " +
-                                  _profile.getModel[ProfileConstants.NAME]
-                                      [ProfileConstants.LAST_NAME],
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.38,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              _profile.getModel[ProfileConstants.HEADLINE],
-                              style: TextStyle(
-                                fontSize: 14,
+            return false;
+          },
+          child: CustomScrollView(
+            physics: ClampingScrollPhysics(),
+            slivers: <Widget>[
+              SliverAppBar(
+                title: isExpanded
+                    ? Container()
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _profile.getModel[ProfileConstants.NAME]
+                                    [ProfileConstants.FIRST_NAME] +
+                                " " +
+                                _profile.getModel[ProfileConstants.NAME]
+                                    [ProfileConstants.LAST_NAME],
+                            style: TextStyle(
+                                fontSize: 16,
                                 height: 1.38,
-                                color: Colors.grey,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          Text(
+                            _profile.getModel[ProfileConstants.HEADLINE],
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.38,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                expandedHeight: expandedHeader,
+                backgroundColor: Colors.grey,
+                leading: Container(
+                  margin: EdgeInsets.all(4),
+                  child: BackButton(
+                    color: isExpanded ? Colors.white : Colors.cyan,
+                  ),
+                ),
+                pinned: true,
+                elevation: 5.0,
+                forceElevated: true,
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                      color: isExpanded ? Colors.transparent : Colors.white,
+                      image: isExpanded
+                          ? DecorationImage(
+                              fit: BoxFit.cover,
+                              alignment: Alignment.bottomCenter,
+                              image: AssetImage("assets/images/banner.jpg"))
+                          : null),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: isExpanded
+                        ? Transform(
+                            transform: Matrix4.identity()
+                              ..translate(0.0, avatarMaximumRadius),
+                            child: MyAvatar(
+                              size: avatarRadius,
+                            ),
+                          )
+                        : SizedBox.shrink(),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          isExpanded
+                              ? SizedBox(
+                                  height: avatarMinimumRadius * 2,
+                                )
+                              : MyAvatar(
+                                  size: avatarMinimumRadius,
+                                ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 10.0),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 5.0, horizontal: 10.0),
+                              decoration: BoxDecoration(
+                                color: Colors.lightBlue,
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              child: Text(
+                                "Following",
+                                style: TextStyle(
+                                    fontSize: 17.0, color: Colors.white),
                               ),
                             ),
-                          ],
-                        )
-                      : Container(),
-                ),
-                preferredSize: Size(20, 10)),
-            backgroundColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-                stretchModes: [StretchMode.zoomBackground],
-                centerTitle: true,
-                collapseMode: CollapseMode.parallax,
-                title: profview
-                    ? Container(
-                        child: Wrap(
-                        direction: Axis.vertical,
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: <Widget>[
-                          CircleAvatar(
-                            backgroundColor: Colors.cyan,
-                            radius: 30,
-                            child: Hero(
-                                tag: "profilePic",
-                                child: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: _profile.getModel[
-                                        ProfileConstants.PROFILE_PIC_URL],
-                                    placeholder: (context, url) =>
-                                        CircularProgressIndicator(),
-                                    errorWidget: (context, url, error) =>
-                                        Icon(Icons.error),
-                                    fit: BoxFit.cover,
-                                    width: 60.0,
-                                    height: 60.0,
-                                  ),
-                                )),
                           )
                         ],
-                      ))
-                    : null,
-                background: Image.asset(
-                  'assets/images/banner.jpg',
-                  fit: BoxFit.cover,
-                )),
+                      ),
+                      Container(),
+                    ],
+                  ),
+                ),
+              ),
+              // SliverPersistentHeader(
+              //   pinned: true,
+              //   delegate: TwitterTabs(50.0),
+              // ),
+              new SliverList(
+                  delegate: new SliverChildListDelegate([
+                _getPersonal(_profile),
+                _getEducation(_profile),
+                _getCareer(_profile),
+                _getLanguage(_profile),
+                _getAdditionalInfo(_profile),
+                _resume(_profile)
+              ]))
+            ],
           ),
-          new SliverList(delegate: new SliverChildListDelegate(_buildList(50))),
-        ],
+        ),
       ),
-    ));
+    );
+  }
+}
+
+class MyAvatar extends StatelessWidget {
+  final double size;
+
+  const MyAvatar({Key key, this.size}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.white,
+              width: 2.0,
+            ),
+            shape: BoxShape.circle),
+        child: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: CircleAvatar(
+            radius: size,
+            backgroundImage: AssetImage("assets/images/profile.png"),
+          ),
+        ),
+      ),
+    );
   }
 }

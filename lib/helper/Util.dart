@@ -1,6 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+//import
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
 
 class Util {
   static Color hexToColor(String code) {
@@ -12,6 +19,35 @@ class Util {
       context,
       MaterialPageRoute(builder: (context) => page),
     );
+  }
+
+  static Color getColor1() {
+    return Util.hexToColor("#2fc3cf");
+  }
+
+  static Color getColor2() {
+    return Util.hexToColor("#2d91ce");
+  }
+
+// //write to app path
+//   static Future<void> writeToFile(String assetPath, String filename) async {
+//     //read and write
+//     var bytes = await rootBundle.load(assetPath);
+//     String dir = (await getApplicationDocumentsDirectory()).path;
+//     final buffer = bytes.buffer;
+//     return new File('$dir/$filename').writeAsBytes(
+//         buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+//   }
+
+  static Future<void> saveFileLocally(
+      String networkPath, String filename) async {
+    //read and write
+    File file = await DefaultCacheManager().getSingleFile(networkPath);
+    var bytes = file.readAsBytesSync();
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    final buffer = bytes.buffer;
+    return new File('$dir/$filename').writeAsBytes(
+        buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
   }
 
   static String readTimestamp(Timestamp timestamp) {

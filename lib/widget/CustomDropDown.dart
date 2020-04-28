@@ -36,7 +36,7 @@ class CustomDropDown extends StatelessWidget {
                 icon: Icon(Icons.arrow_drop_down),
                 iconSize: 18,
                 hint: Text(hint == null ? '' : hint),
-                style: TextStyle(color: Colors.black, fontSize: 16),
+                style: TextStyle(color: Colors.black, fontSize: 14),
                 onChanged: onChanged == null ? (input) {} : onChanged,
                 items: list.map<DropdownMenuItem>((value) {
                   return DropdownMenuItem(

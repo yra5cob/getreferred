@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:getreferred/helper/Util.dart';
 
 class CustomButton extends StatelessWidget {
   final Function onTap;
@@ -46,35 +47,43 @@ class CustomButton extends StatelessWidget {
                   ),
                 ]
               : [],
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(50),
         ),
-        child: InkWell(
-            onTap: onTap == null ? () {} : onTap,
-            child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: backgroundColor == null
-                        ? Colors.green[800]
-                        : backgroundColor),
-                padding: padding == null
-                    ? EdgeInsets.only(left: 20, right: 20, top: 15, bottom: 15)
-                    : padding,
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        label,
-                        style: TextStyle(
-                            color: textColor == null ? Colors.white : textColor,
-                            fontSize: fontSize),
-                      ),
-                      if (icon != null)
-                        Icon(
-                          icon == null ? Icons.arrow_forward_ios : icon,
-                          color: textColor == null ? Colors.white : textColor,
-                          size: fontSize,
+        child: Material(
+          child: InkWell(
+              onTap: onTap == null ? () {} : onTap,
+              child: Container(
+                  decoration: BoxDecoration(
+                      gradient: backgroundColor == null
+                          ? LinearGradient(
+                              colors: [Util.getColor1(), Util.getColor2()])
+                          : null,
+                      borderRadius: BorderRadius.circular(15),
+                      color: backgroundColor == null
+                          ? Colors.green[800]
+                          : backgroundColor),
+                  padding: padding == null
+                      ? EdgeInsets.only(
+                          left: 20, right: 20, top: 15, bottom: 15)
+                      : padding,
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                              color:
+                                  textColor == null ? Colors.white : textColor,
+                              fontSize: fontSize),
                         ),
-                      if (image != null) SizedBox(height: 20, child: image)
-                    ]))));
+                        if (icon != null)
+                          Icon(
+                            icon == null ? Icons.arrow_forward_ios : icon,
+                            color: textColor == null ? Colors.white : textColor,
+                            size: fontSize,
+                          ),
+                        if (image != null) SizedBox(height: 20, child: image)
+                      ]))),
+        ));
   }
 }

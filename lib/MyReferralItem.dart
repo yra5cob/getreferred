@@ -20,12 +20,12 @@ import 'package:intl/intl.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:line_icons/line_icons.dart';
 
-class ReferralItem extends StatelessWidget {
+class MyReferralItem extends StatelessWidget {
   bool commentPage = false;
   ReferralModel referralModel = new ReferralModel();
   int numComments = 0;
   final firestore = Firestore.instance;
-  ReferralItem({DocumentSnapshot doc, this.commentPage, this.referralModel}) {
+  MyReferralItem({DocumentSnapshot doc, this.commentPage, this.referralModel}) {
     if (referralModel == null) {
       referralModel = new ReferralModel();
     }
@@ -353,149 +353,152 @@ class ReferralItem extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          Column(
+                    ],
+                  ),
+                ),
+                FittedBox(
+                  child: Container(
+                    child: Row(
+                      children: <Widget>[
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: <Widget>[
-                                  CircleAvatar(
-                                    backgroundColor: Colors.cyan,
-                                    radius: 20,
-                                    child: ClipOval(
-                                      child: CachedNetworkImage(
-                                        imageUrl: referralModel.getModel[
-                                                ReferralConstants
-                                                    .REFERRAL_AUTHOR]
-                                            [ProfileConstants.PROFILE_PIC_URL],
-                                        placeholder: (context, url) =>
-                                            CircularProgressIndicator(),
-                                        errorWidget: (context, url, error) =>
-                                            Icon(Icons.error),
-                                        fit: BoxFit.cover,
-                                        width: 38.0,
-                                        height: 38.0,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        referralModel.getModel[ReferralConstants
-                                                        .REFERRAL_AUTHOR]
-                                                    [ProfileConstants.NAME]
-                                                [ProfileConstants.FIRST_NAME] +
-                                            " " +
-                                            referralModel.getModel[
-                                                        ReferralConstants
-                                                            .REFERRAL_AUTHOR]
-                                                    [ProfileConstants.NAME]
-                                                [ProfileConstants.LAST_NAME],
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      Text(
-                                        referralModel.getModel[ReferralConstants
-                                                .REFERRAL_AUTHOR]
-                                            [ProfileConstants.HEADLINE],
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.grey[500]),
-                                      ),
-                                      Text(
-                                        Util.readTimestamp(
-                                            referralModel.getModel[
-                                                ReferralConstants.POST_DATE]),
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            height: 1.38,
-                                            color: Colors.grey),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )
+                              Text(
+                                "30",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.yellow[700],
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "Requested",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.yellow[700],
+                                ),
+                              ),
                             ],
-                          )
-                        ],
-                      ),
-                    ],
+                          ),
+                        ),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                "10",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "Accepted",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                "5",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.green[200],
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "Referred",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green[200],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                "0",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.green[300],
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "Interviewed",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green[300],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                "0",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "Hired",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
                 Container(
                   margin: EdgeInsets.only(bottom: 12),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          InkWell(
-                            onTap: () {
-                              Util.navigate(
-                                  context,
-                                  ReferralRequestView(
-                                    referralModel: referralModel,
-                                  ));
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                      color: Colors.grey,
-                                      blurRadius: 3,
-                                      offset: Offset(0, 2))
-                                ],
-                                borderRadius: BorderRadius.only(
-                                    bottomRight: Radius.circular(15),
-                                    topRight: Radius.circular(15)),
-                                color: referralModel.getMyRequest.getModel[
-                                            ReferralRequestConstants
-                                                .CURRENT_STAGE] ==
-                                        ''
-                                    ? Colors.cyan[50]
-                                    : Colors.green[50],
-                              ),
-                              child: Row(
-                                children: <Widget>[
-                                  Icon(
-                                    MyFlutterApp.hands_helping_solid,
-                                    color: referralModel.getMyRequest.getModel[
-                                                ReferralRequestConstants
-                                                    .CURRENT_STAGE] ==
-                                            ''
-                                        ? Colors.cyan
-                                        : Colors.green,
-                                  ),
-                                  referralModel.getMyRequest.getModel[
-                                              ReferralRequestConstants
-                                                  .CURRENT_STAGE] ==
-                                          ''
-                                      ? Text(
-                                          "  Request",
-                                          style: TextStyle(color: Colors.cyan),
-                                        )
-                                      : Text(
-                                          "  Requested",
-                                          style: TextStyle(
-                                              color: Colors.green[700]),
-                                        ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                       Container(
                         padding: EdgeInsets.only(right: 20, bottom: 5),
                         child: Row(
@@ -542,8 +545,8 @@ class ReferralItem extends StatelessWidget {
     );
   }
 
-  factory ReferralItem.fromDocument(DocumentSnapshot document) {
-    return ReferralItem(
+  factory MyReferralItem.fromDocument(DocumentSnapshot document) {
+    return MyReferralItem(
       doc: document,
       commentPage: false,
     );
