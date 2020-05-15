@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 //import
 import 'dart:async';
@@ -19,6 +20,18 @@ class Util {
       context,
       MaterialPageRoute(builder: (context) => page),
     );
+  }
+
+  static Future<String> getFileNameWithExtension(File file) async {
+    if (await file.exists()) {
+      //To get file name without extension
+      //path.basenameWithoutExtension(file.path);
+
+      //return file with file extension
+      return path.basename(file.path);
+    } else {
+      return null;
+    }
   }
 
   static Color getColor1() {
@@ -48,6 +61,11 @@ class Util {
     final buffer = bytes.buffer;
     return new File('$dir/$filename').writeAsBytes(
         buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+  }
+
+  static DateTime TimeStampToDateTime(Timestamp timestamp) {
+    return DateTime.fromMillisecondsSinceEpoch(
+        timestamp.millisecondsSinceEpoch);
   }
 
   static String readTimestamp(Timestamp timestamp) {

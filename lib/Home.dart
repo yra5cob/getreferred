@@ -1,20 +1,29 @@
+import 'package:ReferAll/GroupSelectionScreen.dart';
+import 'package:ReferAll/my_flutter_app_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:getreferred/FeedScreen.dart';
-import 'package:getreferred/LoginPage.dart';
-import 'package:getreferred/MyReferralScreen.dart';
-import 'package:getreferred/PostReferral.dart';
-import 'package:getreferred/ReferralItem.dart';
-import 'package:getreferred/ViewProfile.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/constants/ReferralConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/Util.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/widget/CustomAppBar.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/BLoc/NotificationProvider.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/FeedScreen.dart';
+import 'package:ReferAll/LoginPage.dart';
+import 'package:ReferAll/MyReferralScreen.dart';
+import 'package:ReferAll/NotificationFeedScreen.dart';
+import 'package:ReferAll/PostReferral.dart';
+import 'package:ReferAll/ReferralItem.dart';
+import 'package:ReferAll/ViewProfile.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/constants/ReferralConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/widget/CustomAppBar.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
 
 final _homeScaffoldKey = GlobalKey<ScaffoldState>();
@@ -29,6 +38,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final storage = new FlutterSecureStorage();
   TabController _mainTabController;
   List mainTabs;
+
+  String notificationCount = "0";
 
   @override
   void initState() {
@@ -51,6 +62,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       return FeedScreen();
     } else if (_mainTabIndex == 1) {
       return MyReferralScreen();
+    } else if (_mainTabIndex == 2) {
+      return NotificationFeedScreen();
+    } else if (_mainTabIndex == 3) {
+      return GroupSelectionScreen();
     } else {
       return Container(
         child: Text("data"),
@@ -60,32 +75,38 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final _profile = Provider.of<ProfileModel>(context);
+    final _profile = Provider.of<ProfileProvider>(context).getProfile();
+    Provider.of<NotificationProvider>(context)
+        .getUnreadMessage(_profile.getModel[ProfileConstants.USERNAME])
+        .then((onValue) {
+      setState(() {
+        notificationCount = onValue.toString();
+      });
+    });
     return Scaffold(
       key: _homeScaffoldKey,
       appBar: PreferredSize(
         preferredSize:
-            Size(double.infinity, MediaQuery.of(context).padding.top + 100),
+            Size(double.infinity, MediaQuery.of(context).padding.top + 50),
         child: Container(
           color: Colors.white,
           // decoration: BoxDecoration(boxShadow: [
           //   BoxShadow(color: Colors.black12, spreadRadius: 5, blurRadius: 2)
           // ]),
           width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).padding.top + 70,
+          height: MediaQuery.of(context).padding.top + 50,
           child: Container(
-            // decoration: BoxDecoration(
-            //     gradient: LinearGradient(colors: [
-            //   Util.hexToColor("#2fc3cf"),
-            //   Util.hexToColor("#2d91ce")
-            // ])),
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+              Util.hexToColor("#2fc3cf"),
+              Util.hexToColor("#2d91ce")
+            ])),
             child: Container(
-                padding: EdgeInsets.all(10),
+                padding: EdgeInsets.all(8),
                 margin:
                     EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                 width: MediaQuery.of(context).size.width,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     InkWell(
@@ -95,20 +116,21 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       child: Stack(children: <Widget>[
                         CircleAvatar(
                           backgroundColor: Colors.white,
-                          radius: 20,
+                          radius: 15,
                           child: ClipOval(
                               child: _profile.getModel[
                                           ProfileConstants.PROFILE_PIC_URL] ==
                                       ""
                                   ? Image.asset("assets/images/profile.png")
                                   : CachedNetworkImage(
-                                      imageUrl: "",
+                                      imageUrl: _profile.getModel[
+                                          ProfileConstants.PROFILE_PIC_URL],
                                       placeholder: (context, url) =>
                                           CircularProgressIndicator(),
                                       errorWidget: (context, url, error) =>
                                           Icon(Icons.error),
-                                      height: 38,
-                                      width: 38,
+                                      height: 28,
+                                      width: 28,
                                       fit: BoxFit.cover,
                                     )),
                         ),
@@ -116,8 +138,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             bottom: 0,
                             right: 0,
                             child: Container(
-                              height: 20,
-                              width: 20,
+                              height: 15,
+                              width: 15,
                               padding: EdgeInsets.all(2),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -126,19 +148,33 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               child: Center(
                                 child: Icon(
                                   Icons.menu,
-                                  size: 15,
+                                  size: 10,
                                   color: Colors.cyan,
                                 ),
                               ),
                             ))
                       ]),
                     ),
-                    IconButton(
-                        icon: Icon(
-                          Icons.search,
-                          size: 30,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Container(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              Icon(Icons.search),
+                              Text("Search"),
+                              SizedBox(
+                                height: 50,
+                              )
+                            ],
+                          ),
+                          decoration: BoxDecoration(
+                              color: Colors.blueGrey[50],
+                              borderRadius: BorderRadius.circular(5)),
                         ),
-                        onPressed: () {})
+                      ),
+                    ),
                   ],
                 )),
           ),
@@ -146,7 +182,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       ),
       backgroundColor: Colors.blueGrey[100],
       drawer: Container(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.8),
           margin: EdgeInsets.only(
               right: MediaQuery.of(context).size.width * 0.30,
               top: MediaQuery.of(context).padding.top),
@@ -164,20 +200,21 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                         Expanded(
                             flex: 1,
                             child: CircleAvatar(
-                                backgroundColor: Util.hexToColor("#3ea4f0"),
+                                backgroundColor: Colors.cyan,
                                 radius: 25,
                                 child: Hero(
                                   tag: "profilePic",
                                   child: ClipOval(
                                       child: CachedNetworkImage(
-                                    imageUrl: "",
+                                    imageUrl: _profile.getModel[
+                                        ProfileConstants.PROFILE_PIC_URL],
                                     placeholder: (context, url) =>
                                         CircularProgressIndicator(),
                                     errorWidget: (context, url, error) =>
                                         Icon(Icons.error),
                                     fit: BoxFit.cover,
-                                    width: 50,
-                                    height: 50,
+                                    width: 48,
+                                    height: 48,
                                   )),
                                 ))),
                         SizedBox(
@@ -190,30 +227,41 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Text(
-                                  "Yeswanth Kumar Rajakumaran",
-                                  style: TextStyle(
-                                      fontSize: 16, color: Colors.black),
-                                ),
-                                SizedBox(
-                                  height: 10,
+                                  _profile.getModel[ProfileConstants.NAME]
+                                          [ProfileConstants.FIRST_NAME] +
+                                      " " +
+                                      _profile.getModel[ProfileConstants.NAME]
+                                          [ProfileConstants.LAST_NAME],
+                                  style: GoogleFonts.lato(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
                                 ),
                                 Row(
                                   children: <Widget>[
-                                    InkWell(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ViewProfile()),
-                                        );
-                                      },
-                                      child: Text(
-                                        "View Profile",
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            foreground:
-                                                UIUtil.getTextGradient()),
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ViewProfile()),
+                                          );
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0),
+                                          child: Text(
+                                            "View Profile",
+                                            style: GoogleFonts.lato(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                foreground:
+                                                    UIUtil.getTextGradient()),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     SizedBox(
@@ -223,27 +271,28 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                     SizedBox(
                                       width: 5,
                                     ),
-                                    InkWell(
-                                      onTap: () {
-                                        storage
-                                            .delete(
-                                                key: ProfileConstants.USERNAME)
-                                            .then((s) {
-                                          Navigator.pushAndRemoveUntil(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    LoginPage(),
-                                              ),
-                                              ModalRoute.withName("/Home"));
-                                        });
-                                      },
-                                      child: Text(
-                                        "Log out",
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            foreground:
-                                                UIUtil.getTextGradient()),
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          Provider.of<ProfileProvider>(context,
+                                                  listen: false)
+                                              .signOut();
+
+                                          Get.off(LoginPage());
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0),
+                                          child: Text(
+                                            "Log out",
+                                            style: GoogleFonts.lato(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                foreground:
+                                                    UIUtil.getTextGradient()),
+                                          ),
+                                        ),
                                       ),
                                     )
                                   ],
@@ -254,10 +303,15 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             icon: Icon(
                               Icons.close,
                               size: 35,
-                              color: Colors.black,
+                              color: Colors.grey[800],
                             ),
-                            onPressed: () {})
+                            onPressed: () {
+                              Navigator.pop(context);
+                            })
                       ],
+                    ),
+                    SizedBox(
+                      height: 10,
                     ),
                     Divider(
                       color: Colors.grey,
@@ -277,7 +331,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       width: 10,
                     ),
                     Text("Settings",
-                        style: TextStyle(
+                        style: GoogleFonts.lato(
                           fontSize: 20,
                         ))
                   ],
@@ -290,151 +344,207 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             ],
           )),
       body: _mainTabContent(),
-      floatingActionButton: Container(
-          height: 80.0,
-          width: 80.0,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                  offset: Offset(0, 6), blurRadius: 6, color: Colors.grey[500])
-            ],
-            gradient:
-                LinearGradient(colors: [Util.getColor1(), Util.getColor2()]),
-          ),
-          child: IconButton(
-            icon: Icon(
-              Icons.add,
-              color: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: Container(
+            height: 80.0,
+            width: 80.0,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              // boxShadow: [
+              //   BoxShadow(
+              //       offset: Offset(0, 6),
+              //       blurRadius: 6,
+              //       color: Colors.grey[500])
+              // ],
+              gradient:
+                  LinearGradient(colors: [Util.getColor1(), Util.getColor2()]),
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PostReferral()),
-              );
-            },
-          )),
+            child: IconButton(
+              icon: Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PostReferral()),
+                );
+              },
+            )),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-            boxShadow: [BoxShadow(color: Colors.grey[400], blurRadius: 1)]),
-        child: BottomAppBar(
-          elevation: 50,
-          child: new Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              SizedBox(
-                width: 10,
-                height: 80,
-              ),
-              ShaderMask(
-                blendMode: BlendMode.srcATop,
-                shaderCallback: (bounds) => RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.5,
-                  colors: [Util.getColor1(), Util.getColor2()],
-                  tileMode: TileMode.mirror,
-                ).createShader(bounds),
-                child: IconButton(
-                  icon: Icon(Icons.home),
-                  iconSize: 40,
-                  color: _mainTabController.index == 0
-                      ? Colors.green[800]
-                      : Colors.green[200],
-                  splashColor: Colors.cyan[50],
-                  onPressed: () {
-                    _mainTabController.index = 0;
-                  },
+      bottomNavigationBar: BottomAppBar(
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        shape: CircularNotchedRectangle(),
+        child: Container(
+          decoration: BoxDecoration(
+              boxShadow: [BoxShadow(color: Colors.grey[400], blurRadius: 1)]),
+          child: BottomAppBar(
+            elevation: 50,
+            child: new Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                SizedBox(
+                  width: 10,
+                  height: 50,
                 ),
-              ),
-              ShaderMask(
-                blendMode: BlendMode.srcATop,
-                shaderCallback: (bounds) => RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.5,
-                  colors: [Util.getColor1(), Util.getColor2()],
-                  tileMode: TileMode.mirror,
-                ).createShader(bounds),
-                child: IconButton(
-                  color: _mainTabController.index == 1
-                      ? Colors.green[800]
-                      : Colors.green[200],
-                  icon: Icon(Icons.insert_drive_file),
-                  splashColor: Colors.cyan[50],
-                  iconSize: 40,
-                  onPressed: () {
-                    _mainTabController.index = 1;
-                  },
-                ),
-              ),
-              SizedBox(
-                width: 30,
-              ),
-              Container(
-                height: 50,
-                width: 50,
-                child: Stack(
-                  children: <Widget>[
-                    ShaderMask(
-                      blendMode: BlendMode.srcATop,
-                      shaderCallback: (bounds) => RadialGradient(
-                        center: Alignment.center,
-                        radius: 0.5,
-                        colors: [Util.getColor1(), Util.getColor2()],
-                        tileMode: TileMode.mirror,
-                      ).createShader(bounds),
-                      child: IconButton(
-                        color: _mainTabController.index == 2
-                            ? Colors.green[800]
-                            : Colors.green[200],
+                _mainTabController.index == 0
+                    ? ShaderMask(
+                        blendMode: BlendMode.srcATop,
+                        shaderCallback: (bounds) => RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.5,
+                          colors: [Util.getColor1(), Util.getColor2()],
+                          tileMode: TileMode.mirror,
+                        ).createShader(bounds),
+                        child: IconButton(
+                          icon: Icon(Icons.home),
+                          iconSize: 30,
+                          color: _mainTabController.index == 0
+                              ? Colors.green[800]
+                              : Colors.green[200],
+                          splashColor: Colors.cyan[50],
+                          onPressed: () {
+                            _mainTabController.index = 0;
+                          },
+                        ),
+                      )
+                    : IconButton(
+                        icon: Icon(MyFlutterApp.home_solid),
+                        color: Colors.grey[500],
+                        iconSize: 30,
                         splashColor: Colors.cyan[50],
-                        icon: Icon(Icons.notifications),
-                        iconSize: 40,
                         onPressed: () {
-                          _mainTabController.index = 2;
+                          _mainTabController.index = 0;
                         },
                       ),
-                    ),
-                    Container(
-                      height: 25,
-                      width: 25,
-                      decoration: BoxDecoration(
-                          color: Colors.red, shape: BoxShape.circle),
-                      child: Center(
-                        child: Text(
-                          "2",
-                          style: TextStyle(color: Colors.white),
+                _mainTabController.index == 1
+                    ? ShaderMask(
+                        blendMode: BlendMode.srcATop,
+                        shaderCallback: (bounds) => RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.5,
+                          colors: [Util.getColor1(), Util.getColor2()],
+                          tileMode: TileMode.mirror,
+                        ).createShader(bounds),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.insert_drive_file,
+                            color: Colors.cyan,
+                          ),
+                          splashColor: Colors.cyan[50],
+                          iconSize: 30,
+                          onPressed: () {
+                            _mainTabController.index = 1;
+                          },
                         ),
+                      )
+                    : IconButton(
+                        color: Colors.grey[500],
+                        icon: Icon(
+                          MyFlutterApp.file_solid,
+                          color: Colors.grey[500],
+                        ),
+                        splashColor: Colors.cyan[50],
+                        iconSize: 30,
+                        onPressed: () {
+                          _mainTabController.index = 1;
+                        },
                       ),
-                    )
-                  ],
+                SizedBox(
+                  width: 30,
                 ),
-              ),
-              ShaderMask(
-                blendMode: BlendMode.srcATop,
-                shaderCallback: (bounds) => RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.5,
-                  colors: [Util.getColor1(), Util.getColor2()],
-                  tileMode: TileMode.mirror,
-                ).createShader(bounds),
-                child: IconButton(
-                  color: _mainTabController.index == 3
-                      ? Colors.green[800]
-                      : Colors.green[200],
-                  splashColor: Colors.cyan[50],
-                  icon: Icon(Icons.settings),
-                  iconSize: 40,
-                  onPressed: () {
-                    _mainTabController.index = 3;
-                  },
+                Container(
+                  height: 50,
+                  width: 50,
+                  child: Stack(
+                    children: <Widget>[
+                      _mainTabController.index == 2
+                          ? ShaderMask(
+                              blendMode: BlendMode.srcATop,
+                              shaderCallback: (bounds) => RadialGradient(
+                                center: Alignment.center,
+                                radius: 0.5,
+                                colors: [Util.getColor1(), Util.getColor2()],
+                                tileMode: TileMode.mirror,
+                              ).createShader(bounds),
+                              child: IconButton(
+                                color: _mainTabController.index == 2
+                                    ? Colors.green[800]
+                                    : Colors.green[200],
+                                splashColor: Colors.cyan[50],
+                                icon: Icon(Icons.notifications),
+                                iconSize: 30,
+                                onPressed: () {
+                                  _mainTabController.index = 2;
+                                },
+                              ),
+                            )
+                          : IconButton(
+                              splashColor: Colors.cyan[50],
+                              icon: Icon(
+                                Icons.notifications_none,
+                                color: Colors.grey[500],
+                              ),
+                              iconSize: 30,
+                              onPressed: () {
+                                _mainTabController.index = 2;
+                              },
+                            ),
+                      notificationCount != '0'
+                          ? Container(
+                              height: 25,
+                              width: 25,
+                              decoration: BoxDecoration(
+                                  color: Colors.red, shape: BoxShape.circle),
+                              child: Center(
+                                child: Text(
+                                  notificationCount,
+                                  style: GoogleFonts.lato(color: Colors.white),
+                                ),
+                              ),
+                            )
+                          : Container()
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: 10,
-              )
-            ],
+                _mainTabController.index == 3
+                    ? ShaderMask(
+                        blendMode: BlendMode.srcATop,
+                        shaderCallback: (bounds) => RadialGradient(
+                          center: Alignment.center,
+                          radius: 0.5,
+                          colors: [Util.getColor1(), Util.getColor2()],
+                          tileMode: TileMode.mirror,
+                        ).createShader(bounds),
+                        child: IconButton(
+                          color: _mainTabController.index == 3
+                              ? Colors.green[800]
+                              : Colors.green[200],
+                          splashColor: Colors.cyan[50],
+                          icon: FaIcon(FontAwesomeIcons.users),
+                          iconSize: 20,
+                          onPressed: () {
+                            _mainTabController.index = 3;
+                          },
+                        ),
+                      )
+                    : IconButton(
+                        color: Colors.grey[500],
+                        splashColor: Colors.cyan[50],
+                        icon: Icon(MyFlutterApp.users_solid),
+                        iconSize: 30,
+                        onPressed: () {
+                          _mainTabController.index = 3;
+                        },
+                      ),
+                SizedBox(
+                  width: 10,
+                )
+              ],
+            ),
           ),
         ),
       ),

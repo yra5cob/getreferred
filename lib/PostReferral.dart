@@ -1,32 +1,38 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:getreferred/MultiSelectAutocompletion.dart';
-import 'package:getreferred/autocompeletescreen.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/constants/ReferralConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/Util.dart';
+import 'package:ReferAll/BLoc/FeedProvider.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/MultiSelectAutocompletion.dart';
+import 'package:ReferAll/autocompeletescreen.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/constants/ReferralConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/ReferralModel.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:notus/notus.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:convert';
-import 'package:getreferred/widget/RichEditor.dart';
+import 'package:ReferAll/widget/RichEditor.dart';
+import 'package:progress_hud/progress_hud.dart';
 import 'package:provider/provider.dart';
 import 'package:zefyr/zefyr.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/widget/CustomButton.dart';
-import 'package:getreferred/widget/CustomDropDown.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/widget/CustomButton.dart';
+import 'package:ReferAll/widget/CustomDropDown.dart';
 import 'package:notus/convert.dart';
 import 'package:quill_delta/quill_delta.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
 import 'package:flutter_multiselect/flutter_multiselect.dart';
-import 'package:getreferred/widget/CustomTouchSearch.dart';
+import 'package:ReferAll/widget/CustomTouchSearch.dart';
 
 class PostReferral extends StatefulWidget {
   @override
@@ -36,7 +42,8 @@ class PostReferral extends StatefulWidget {
 class _PostReferralState extends State<PostReferral> {
   TextEditingController roleCtrl;
   TextEditingController companyCtrl;
-
+  ProgressHUD _progressHUD;
+  bool _loading = false;
   TextEditingController ctcCtrl;
   TextEditingController expCtrl;
   String _jddata = '';
@@ -47,6 +54,7 @@ class _PostReferralState extends State<PostReferral> {
   List<String> graduation_req = [];
   String jd_type;
   TextEditingController authorNotesCtrls;
+  FeedProvider _feedProvider;
 
   /// Allows to control the editor and the document.
   ZefyrController _controller;
@@ -55,6 +63,8 @@ class _PostReferralState extends State<PostReferral> {
   FocusNode _focusNode;
 
   TextEditingController locationCtrl;
+
+  final ReferralModel referralModel = new ReferralModel();
 
   /// Loads the document to be edited in Zefyr.
   NotusDocument _loadDocument() {
@@ -74,10 +84,31 @@ class _PostReferralState extends State<PostReferral> {
     return '';
   }
 
+  void dismissProgressHUD() {
+    setState(() {
+      if (_loading) {
+        _progressHUD.state.dismiss();
+      } else {
+        _progressHUD.state.show();
+      }
+
+      _loading = !_loading;
+    });
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _progressHUD = new ProgressHUD(
+      backgroundColor: Colors.black12,
+      color: Colors.cyan,
+      containerColor: Colors.white,
+      borderRadius: 5.0,
+      loading: false,
+      text: "Posting...",
+    );
+
     final document = _loadDocument();
     _controller = ZefyrController(document);
     _focusNode = FocusNode();
@@ -134,536 +165,500 @@ class _PostReferralState extends State<PostReferral> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size(MediaQuery.of(context).size.width, 70),
-        child: SafeArea(
-          child: Container(
-            margin: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.grey, blurRadius: 6, offset: Offset(0, 1))
-              ],
+    _feedProvider = Provider.of<FeedProvider>(context);
+    return Stack(
+      children: <Widget>[
+        Scaffold(
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.white,
+            title: Text("New Referral",
+                style: Theme.of(context).textTheme.headline6.merge(
+                    GoogleFonts.lato(
+                        fontWeight: FontWeight.bold, color: Colors.black54))),
+            leading: BackButton(
+              color: Colors.cyan,
             ),
-            child: Row(
+          ),
+          floatingActionButton: Container(),
+          body: Container(
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height,
+                maxWidth: MediaQuery.of(context).size.width),
+            margin: EdgeInsets.all(20),
+            child: Column(
               children: <Widget>[
-                IconButton(
-                    icon: ShaderMask(
-                      blendMode: BlendMode.srcATop,
-                      shaderCallback: (bounds) => RadialGradient(
-                        center: Alignment.center,
-                        radius: 0.5,
-                        colors: [Util.getColor1(), Util.getColor2()],
-                        tileMode: TileMode.mirror,
-                      ).createShader(bounds),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        size: 28.0,
-                        color: Colors.cyan,
-                      ),
-                    ),
-                    onPressed: () {}),
                 Expanded(
-                    child: Center(
-                        child: Text(
-                  "New Referral",
-                  style: TextStyle(
-                      foreground: UIUtil.getTextGradient(), fontSize: 20),
-                ))),
-                IconButton(
-                    icon: ShaderMask(
-                      blendMode: BlendMode.srcATop,
-                      shaderCallback: (bounds) => RadialGradient(
-                        center: Alignment.center,
-                        radius: 0.5,
-                        colors: [Util.getColor1(), Util.getColor2()],
-                        tileMode: TileMode.mirror,
-                      ).createShader(bounds),
-                      child: Icon(
-                        LineAwesomeIcons.ellipsis_v,
-                        size: 28.0,
-                        color: Colors.cyan,
+                  child: ListView(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child:
+                            Text("Role", style: UIUtil.getTitleStyle(context)),
                       ),
-                    ),
-                    onPressed: () {}),
+                      CustomTouchSearch(
+                        hint: "Role",
+                        controller: roleCtrl,
+                        onResult: (s) {
+                          setState(() {
+                            roleCtrl.text = s;
+                          });
+                        },
+                        readonly: true,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Company",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      CustomTouchSearch(
+                        hint: "Company",
+                        controller: companyCtrl,
+                        onResult: (s) {
+                          setState(() {
+                            companyCtrl.text = s;
+                          });
+                        },
+                        readonly: true,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Location",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      CustomTouchSearch(
+                        hint: "Location",
+                        controller: locationCtrl,
+                        onResult: (s) {
+                          setState(() {
+                            locationCtrl.text = s;
+                          });
+                        },
+                        readonly: true,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "CTC",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      CustomTextField(
+                        hint: "CTC",
+                        controller: ctcCtrl,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Experience",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      CustomTextField(
+                        hint: "Experience",
+                        controller: expCtrl,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Travel Requirments",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      CustomDropDown(
+                        hint: "Travel requirment",
+                        list: Travel_type.values,
+                        isEnum: true,
+                        value: travel_req,
+                        onChanged: (value) {
+                          setState(() {
+                            travel_req = value;
+                          });
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "College Requirement",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(5),
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Colors.blueGrey[50],
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  Wrap(
+                                    children: <Widget>[
+                                      for (int i = 0;
+                                          i < college_req.length;
+                                          i++)
+                                        Container(
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.only(
+                                              top: 5,
+                                              bottom: 5,
+                                              left: 10,
+                                              right: 10),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(50),
+                                            color: Colors.blueGrey[100],
+                                          ),
+                                          child: Wrap(
+                                            direction: Axis.horizontal,
+                                            children: <Widget>[
+                                              Container(
+                                                child: Text(college_req[i]),
+                                              ),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    college_req.removeAt(i);
+                                                  });
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.blueGrey[50],
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: 15,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CustomButton(
+                              onTap: () {
+                                final r = Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MultiSelectAutoCompleteScreen(
+                                      lst: ['PSG', 'IIM'],
+                                      hint: "Search year",
+                                    ),
+                                  ),
+                                );
+                                r.then((r) {
+                                  List<String> s = r as List<String>;
+                                  setState(() {
+                                    college_req.addAll(s);
+                                  });
+                                });
+                              },
+                              label: "+",
+                              shadow: false,
+                            )
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Graduation year requirement",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(5),
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Colors.blueGrey[50],
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  Wrap(
+                                    children: <Widget>[
+                                      for (int i = 0;
+                                          i < graduation_req.length;
+                                          i++)
+                                        Container(
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.only(
+                                              top: 5,
+                                              bottom: 5,
+                                              left: 10,
+                                              right: 10),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(50),
+                                            color: Colors.blueGrey[100],
+                                          ),
+                                          child: Wrap(
+                                            direction: Axis.horizontal,
+                                            children: <Widget>[
+                                              Container(
+                                                child: Text(graduation_req[i]),
+                                              ),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    graduation_req.removeAt(i);
+                                                  });
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.blueGrey[50],
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: 15,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CustomButton(
+                              label: "+",
+                              shadow: false,
+                              onTap: () {
+                                final r = Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MultiSelectAutoCompleteScreen(
+                                      lst: ['2020', '2021'],
+                                      hint: "Search year",
+                                    ),
+                                  ),
+                                );
+                                r.then((r) {
+                                  List<String> s = r as List<String>;
+                                  setState(() {
+                                    graduation_req.addAll(s);
+                                  });
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Job Description",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(5),
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Colors.blueGrey[50],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            SizedBox(
+                              height: 5,
+                            ),
+                            Container(
+                              height: 100,
+                              child: Markdown(
+                                controller: controller,
+                                selectable: true,
+                                data: _jddata,
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                CustomButton(
+                                  onTap: () {
+                                    var c = Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => RichEditor(),
+                                      ),
+                                    );
+                                    c.then((onValue) {
+                                      jd_type = ReferralConstants.JD_TYPE_PASTE;
+                                      _controller = onValue as ZefyrController;
+                                      NotusDocument n = _controller.document;
+                                      setState(() {
+                                        _jddata =
+                                            notusMarkdown.encode(n.toDelta());
+                                      });
+                                    });
+                                  },
+                                  label: "Text ",
+                                  fontSize: 10,
+                                  shadow: false,
+                                  icon: Icons.text_fields,
+                                ),
+                                CustomButton(
+                                  label: "Attach ",
+                                  onTap: () {
+                                    jd_type = ReferralConstants.JD_TYPE_LINK;
+                                    FilePicker.getFile(
+                                      type: FileType.custom,
+                                      allowedExtensions: ['pdf', 'doc'],
+                                    ).then((onValue) {
+                                      files = onValue;
+                                      setState(() {
+                                        _jddata = files.path;
+                                      });
+                                    });
+                                  },
+                                  fontSize: 10,
+                                  shadow: false,
+                                  icon: Icons.attach_file,
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Additional Notes",
+                          style: UIUtil.getTitleStyle(context),
+                        ),
+                      ),
+                      CustomTextField(
+                        hint: "Author notes",
+                        lines: 4,
+                        controller: authorNotesCtrls,
+                      ),
+                    ],
+                  ),
+                ),
+                CustomButton(
+                  label: "Post",
+                  onTap: () {
+                    dismissProgressHUD();
+                    final _profile =
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .getProfile();
+                    Map<String, dynamic> data = {
+                      ReferralConstants.REFERRAL_AUTHOR: {
+                        ProfileConstants.NAME: {
+                          ProfileConstants.FIRST_NAME:
+                              _profile.getModel[ProfileConstants.NAME]
+                                  [ProfileConstants.FIRST_NAME],
+                          ProfileConstants.LAST_NAME:
+                              _profile.getModel[ProfileConstants.NAME]
+                                  [ProfileConstants.LAST_NAME]
+                        },
+                        ProfileConstants.USERNAME:
+                            _profile.getModel[ProfileConstants.USERNAME],
+                        ProfileConstants.HEADLINE:
+                            _profile.getModel[ProfileConstants.HEADLINE],
+                        ProfileConstants.PUSH_TOKEN:
+                            _profile.getModel[ProfileConstants.PUSH_TOKEN],
+                        ProfileConstants.PROFILE_PIC_URL:
+                            _profile.getModel[ProfileConstants.PROFILE_PIC_URL]
+                      },
+                      ReferralConstants.NUM_COMMENTS: 0,
+                      ReferralConstants.NUM_SHARES: 0,
+                      ReferralConstants.ROLE: roleCtrl.text,
+                      ReferralConstants.COMPANY: companyCtrl.text,
+                      ReferralConstants.CTC: ctcCtrl.text,
+                      ReferralConstants.EXPERIENCE: expCtrl.text,
+                      ReferralConstants.BOOKMARKS: [],
+                      ReferralConstants.REQUESTER_IDS: [],
+                      ReferralConstants.LOCATION: locationCtrl.text,
+                      ReferralConstants.TRAVEL_REQ:
+                          getSafeValue(EnumToString.parseCamelCase(travel_req)),
+                      ReferralConstants.COLLEGE_REQ: college_req,
+                      ReferralConstants.GRADUATION_REQ: graduation_req,
+                      ReferralConstants.JD_TYPE: jd_type,
+                      ReferralConstants.JD: _jddata,
+                      ReferralConstants.AUTHOR_NOTE: authorNotesCtrls.text,
+                      ReferralConstants.ACTIVE: true,
+                      ReferralConstants.CLOSE_REASON: "",
+                      ReferralConstants.POST_DATE: DateTime.now(),
+                      ReferralConstants.CLOSE_DATE: null,
+                      ReferralConstants.HIDE: false,
+                      ReferralConstants.REQUESTS_NUM: 0,
+                      ReferralConstants.ACCEPTED_NUM: 0,
+                      ReferralConstants.REFERRED_NUM: 0,
+                      ReferralConstants.INTERVIEWED_NUM: 0,
+                      ReferralConstants.CLOSED_NUM: 0,
+                      ReferralConstants.HIRED_NUM: 0,
+                      ReferralConstants.PENDING_ACTION_NUM: 0,
+                    };
+
+                    referralModel.setAll(data);
+
+                    _feedProvider.postReferral(referralModel).then((onValue) {
+                      if (jd_type == ReferralConstants.JD_TYPE_LINK) {
+                        _feedProvider
+                            .uploadJD(files, referralModel)
+                            .then((onValue) {
+                          referralModel
+                                  .getModel[ReferralConstants.JD_TYPE_LINK] =
+                              onValue;
+                          _feedProvider
+                              .updateReferral(referralModel)
+                              .then((onValue) {
+                            dismissProgressHUD();
+                            Navigator.pop(context);
+                          });
+                        });
+                      } else {
+                        dismissProgressHUD();
+                        Navigator.pop(context);
+                      }
+                    });
+                  },
+                )
               ],
             ),
           ),
         ),
-      ),
-      floatingActionButton: Container(),
-      body: Container(
-        constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height,
-            maxWidth: MediaQuery.of(context).size.width),
-        margin: EdgeInsets.all(20),
-        child: ListView(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Role",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomTouchSearch(
-              hint: "Role",
-              controller: roleCtrl,
-              onResult: (s) {
-                setState(() {
-                  roleCtrl.text = s;
-                });
-              },
-              readonly: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Company",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomTouchSearch(
-              hint: "Company",
-              controller: companyCtrl,
-              onResult: (s) {
-                setState(() {
-                  companyCtrl.text = s;
-                });
-              },
-              readonly: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Location",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomTouchSearch(
-              hint: "Location",
-              controller: locationCtrl,
-              onResult: (s) {
-                setState(() {
-                  locationCtrl.text = s;
-                });
-              },
-              readonly: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "CTC",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomTextField(
-              hint: "CTC",
-              controller: ctcCtrl,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Experience",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomTextField(
-              hint: "Experience",
-              controller: expCtrl,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Travel Requirments",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomDropDown(
-              hint: "Travel requirment",
-              list: Travel_type.values,
-              isEnum: true,
-              value: travel_req,
-              onChanged: (value) {
-                setState(() {
-                  travel_req = value;
-                });
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "College Requirement",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(5),
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                color: Colors.blueGrey[50],
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Wrap(
-                          children: <Widget>[
-                            for (int i = 0; i < college_req.length; i++)
-                              Container(
-                                margin: EdgeInsets.all(5),
-                                padding: EdgeInsets.only(
-                                    top: 5, bottom: 5, left: 10, right: 10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50),
-                                  color: Colors.blueGrey[100],
-                                ),
-                                child: Wrap(
-                                  direction: Axis.horizontal,
-                                  children: <Widget>[
-                                    Container(
-                                      child: Text(college_req[i]),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          college_req.removeAt(i);
-                                        });
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.blueGrey[50],
-                                        ),
-                                        child: Icon(
-                                          Icons.close,
-                                          size: 15,
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  CustomButton(
-                    onTap: () {
-                      final r = Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MultiSelectAutoCompleteScreen(
-                            lst: ['PSG', 'IIM'],
-                            hint: "Search year",
-                          ),
-                        ),
-                      );
-                      r.then((r) {
-                        List<String> s = r as List<String>;
-                        setState(() {
-                          college_req.addAll(s);
-                        });
-                      });
-                    },
-                    label: "+",
-                    shadow: false,
-                  )
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Graduation year requirement",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(5),
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                color: Colors.blueGrey[50],
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Wrap(
-                          children: <Widget>[
-                            for (int i = 0; i < graduation_req.length; i++)
-                              Container(
-                                margin: EdgeInsets.all(5),
-                                padding: EdgeInsets.only(
-                                    top: 5, bottom: 5, left: 10, right: 10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50),
-                                  color: Colors.blueGrey[100],
-                                ),
-                                child: Wrap(
-                                  direction: Axis.horizontal,
-                                  children: <Widget>[
-                                    Container(
-                                      child: Text(graduation_req[i]),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          graduation_req.removeAt(i);
-                                        });
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.blueGrey[50],
-                                        ),
-                                        child: Icon(
-                                          Icons.close,
-                                          size: 15,
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  CustomButton(
-                    label: "+",
-                    shadow: false,
-                    onTap: () {
-                      final r = Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MultiSelectAutoCompleteScreen(
-                            lst: ['2020', '2021'],
-                            hint: "Search year",
-                          ),
-                        ),
-                      );
-                      r.then((r) {
-                        List<String> s = r as List<String>;
-                        setState(() {
-                          graduation_req.addAll(s);
-                        });
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Job Description",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(5),
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                color: Colors.blueGrey[50],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Container(
-                    height: 100,
-                    child: Markdown(
-                      controller: controller,
-                      selectable: true,
-                      data: _jddata,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      CustomButton(
-                        onTap: () {
-                          var c = Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RichEditor(),
-                            ),
-                          );
-                          c.then((onValue) {
-                            jd_type = ReferralConstants.JD_TYPE_PASTE;
-                            _controller = onValue as ZefyrController;
-                            NotusDocument n = _controller.document;
-                            setState(() {
-                              _jddata = notusMarkdown.encode(n.toDelta());
-                            });
-                          });
-                        },
-                        label: "Text ",
-                        fontSize: 10,
-                        shadow: false,
-                        icon: Icons.text_fields,
-                      ),
-                      CustomButton(
-                        label: "Attach ",
-                        onTap: () {
-                          jd_type = ReferralConstants.JD_TYPE_LINK;
-                          FilePicker.getFile(
-                            type: FileType.custom,
-                            allowedExtensions: ['pdf', 'doc'],
-                          ).then((onValue) {
-                            files = onValue;
-                            setState(() {
-                              _jddata = files.path;
-                            });
-                          });
-                        },
-                        fontSize: 10,
-                        shadow: false,
-                        icon: Icons.attach_file,
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Additional Notes",
-                style: TextStyle(
-                    color: Colors.cyan,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
-              ),
-            ),
-            CustomTextField(
-              hint: "Author notes",
-              lines: 4,
-              controller: authorNotesCtrls,
-            ),
-            CustomButton(
-              label: "Post",
-              onTap: () {
-                final _profile =
-                    Provider.of<ProfileModel>(context, listen: false);
-                Map<String, dynamic> data = {
-                  ReferralConstants.REFERRAL_AUTHOR: {
-                    ProfileConstants.NAME: {
-                      ProfileConstants.FIRST_NAME:
-                          _profile.getModel[ProfileConstants.NAME]
-                              [ProfileConstants.FIRST_NAME],
-                      ProfileConstants.LAST_NAME:
-                          _profile.getModel[ProfileConstants.NAME]
-                              [ProfileConstants.LAST_NAME]
-                    },
-                    ProfileConstants.USERNAME:
-                        _profile.getModel[ProfileConstants.USERNAME],
-                    ProfileConstants.HEADLINE:
-                        _profile.getModel[ProfileConstants.HEADLINE],
-                    ProfileConstants.PROFILE_PIC_URL:
-                        _profile.getModel[ProfileConstants.PROFILE_PIC_URL]
-                  },
-                  ReferralConstants.NUM_APPLIED: 0,
-                  ReferralConstants.NUM_COMMENTS: 0,
-                  ReferralConstants.NUM_SHARES: 0,
-                  ReferralConstants.ROLE: roleCtrl.text,
-                  ReferralConstants.COMPANY: companyCtrl.text,
-                  ReferralConstants.CTC: ctcCtrl.text,
-                  ReferralConstants.EXPERIENCE: expCtrl.text,
-                  ReferralConstants.LOCATION: locationCtrl.text,
-                  ReferralConstants.TRAVEL_REQ:
-                      getSafeValue(EnumToString.parseCamelCase(travel_req)),
-                  ReferralConstants.COLLEGE_REQ: college_req,
-                  ReferralConstants.GRADUATION_REQ: graduation_req,
-                  ReferralConstants.JD_TYPE: jd_type,
-                  ReferralConstants.JD: _jddata,
-                  ReferralConstants.AUTHOR_NOTE: authorNotesCtrls.text,
-                  ReferralConstants.ACTIVE: true,
-                  ReferralConstants.CLOSE_REASON: "",
-                  ReferralConstants.POST_DATE: DateTime.now(),
-                  ReferralConstants.CLOSE_DATE: null,
-                  ReferralConstants.HIDE: false,
-                };
-
-                DocumentReference docRef =
-                    Firestore.instance.collection('referrals').document();
-
-                data[ReferralConstants.REFERRAL_ID] = docRef.documentID;
-
-                if (jd_type == ReferralConstants.JD_TYPE_LINK) {
-                  uploadFile(context, docRef.documentID).then((onValue) {
-                    data[ReferralConstants.JD_TYPE_LINK] = onValue;
-                    docRef.setData(data).then((onValue) {
-                      Navigator.pop(context);
-                    });
-                  });
-                } else {
-                  docRef.setData(data).then((onValue) {
-                    Navigator.pop(context);
-                  });
-                }
-              },
-            )
-          ],
-        ),
-      ),
+        _progressHUD,
+      ],
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
-import 'package:getreferred/widget/CustomButton.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/widget/CustomButton.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
 
 class MultiSelectAutoCompleteScreen extends StatefulWidget {
   final List<String> lst;

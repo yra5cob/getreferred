@@ -7,7 +7,7 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="getreferred"
+        android:label="ReferAll"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:fullBackupContent="false"
@@ -23,6 +23,10 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+              <intent-filter>
+      <action android:name="FLUTTER_NOTIFICATION_CLICK" />
+      <category android:name="android.intent.category.DEFAULT" />
+  </intent-filter>
         </activity>
         <activity
     android:name="com.yalantis.ucrop.UCropActivity"

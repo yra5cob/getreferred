@@ -1,10 +1,9 @@
-import 'package:flutter/cupertino.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/constants/ReferralConstants.dart';
-import 'package:getreferred/model/CommentModel.dart';
-import 'package:getreferred/model/ReferralRequestModel.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/constants/ReferralConstants.dart';
+import 'package:ReferAll/model/CommentModel.dart';
+import 'package:ReferAll/model/ReferralRequestModel.dart';
 
-class ReferralModel extends ChangeNotifier {
+class ReferralModel {
   Map<String, dynamic> model = {
     ReferralConstants.REFERRAL_AUTHOR: {
       ProfileConstants.NAME: {
@@ -22,6 +21,8 @@ class ReferralModel extends ChangeNotifier {
     ReferralConstants.LEVEL: "",
     ReferralConstants.CTC: "",
     ReferralConstants.EXPERIENCE: "",
+    ReferralConstants.BOOKMARKS: [],
+    ReferralConstants.REQUESTER_IDS: [],
     ReferralConstants.TRAVEL_REQ: "",
     ReferralConstants.COLLEGE_REQ: [],
     ReferralConstants.GRADUATION_REQ: [],
@@ -33,6 +34,14 @@ class ReferralModel extends ChangeNotifier {
     ReferralConstants.POST_DATE: "",
     ReferralConstants.CLOSE_DATE: "",
     ReferralConstants.HIDE: "",
+    ReferralConstants.REQUESTS_NUM: 0,
+    ReferralConstants.ACCEPTED_NUM: 0,
+    ReferralConstants.REFERRED_NUM: 0,
+    ReferralConstants.INTERVIEWED_NUM: 0,
+    ReferralConstants.HIRED_NUM: 0,
+    ReferralConstants.PENDING_ACTION_NUM: 0,
+    ReferralConstants.NUM_COMMENTS: 0,
+    ReferralConstants.NUM_SHARES: 0,
   };
 
   Map<String, ReferralRequestModel> referralRequests = {};
@@ -62,11 +71,9 @@ class ReferralModel extends ChangeNotifier {
 
   void setValue(String key, dynamic value) {
     this.model[key] = value;
-    notifyListeners();
   }
 
   void setAll(Map<String, dynamic> map) {
     this.model.addAll(map);
-    notifyListeners();
   }
 }

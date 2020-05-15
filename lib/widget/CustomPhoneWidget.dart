@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_country_picker/country.dart';
 import 'package:flutter_country_picker/flutter_country_picker.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
 
 class CustomPhoneWidget extends StatelessWidget {
   final EdgeInsets margin;

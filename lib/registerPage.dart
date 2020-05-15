@@ -5,23 +5,26 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'emailVerificationPage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:getreferred/LoginPage.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/Util.dart';
-import 'package:getreferred/helper/sizeConfig.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/widget/CustomButton.dart';
-import 'package:getreferred/widget/CustomDialog.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/LoginPage.dart';
+import 'package:ReferAll/PushNotificationManager.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/helper/sizeConfig.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/widget/CustomButton.dart';
+import 'package:ReferAll/widget/CustomDialog.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:getreferred/profileCreationPage.dart';
+import 'package:ReferAll/profileCreationPage.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
 
-final registerGlobalKey = GlobalKey<ScaffoldState>();
+final GlobalKey<ScaffoldState> registerGlobalKey = GlobalKey<ScaffoldState>();
 final GlobalKey<FormState> _registerForm = GlobalKey<FormState>();
 final TextEditingController _pass = TextEditingController();
 final TextEditingController _userNameController = TextEditingController();
@@ -37,6 +40,8 @@ class _RegisterPageState extends State<RegisterPage>
   String _email;
   String _uid;
   bool _loading = false;
+  PushNotificationsManager pushNotificationsManager =
+      PushNotificationsManager();
   String _password;
   String _firstName;
   String _lastName;
@@ -50,6 +55,7 @@ class _RegisterPageState extends State<RegisterPage>
   AnimationController controller;
   Animation locationAnimation;
   Animation opaAnimation;
+  ProfileProvider _profileProvider;
   @override
   void initState() {
     // TODO: implement initState
@@ -71,21 +77,14 @@ class _RegisterPageState extends State<RegisterPage>
 
   @override
   Widget build(BuildContext context) {
+    _profileProvider = Provider.of<ProfileProvider>(context);
     return Scaffold(
-        key: globalKey,
+        key: registerGlobalKey,
         appBar: PreferredSize(
           preferredSize: Size(MediaQuery.of(context).size.width, 70),
           child: SafeArea(
             child: Container(
               margin: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey, blurRadius: 6, offset: Offset(0, 1))
-                ],
-              ),
               child: Row(
                 children: <Widget>[
                   IconButton(
@@ -103,7 +102,9 @@ class _RegisterPageState extends State<RegisterPage>
                           color: Colors.cyan,
                         ),
                       ),
-                      onPressed: () {}),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      }),
                   Expanded(
                       child: Center(
                           child: Text(
@@ -111,22 +112,10 @@ class _RegisterPageState extends State<RegisterPage>
                     style: TextStyle(
                         foreground: UIUtil.getTextGradient(), fontSize: 20),
                   ))),
-                  IconButton(
-                      icon: ShaderMask(
-                        blendMode: BlendMode.srcATop,
-                        shaderCallback: (bounds) => RadialGradient(
-                          center: Alignment.center,
-                          radius: 0.5,
-                          colors: [Util.getColor1(), Util.getColor2()],
-                          tileMode: TileMode.mirror,
-                        ).createShader(bounds),
-                        child: Icon(
-                          LineAwesomeIcons.ellipsis_v,
-                          size: 28.0,
-                          color: Colors.cyan,
-                        ),
-                      ),
-                      onPressed: () {}),
+                  Icon(
+                    Icons.arrow_downward,
+                    color: Colors.white,
+                  ),
                 ],
               ),
             ),
@@ -190,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage>
                                   validator: (input) =>
                                       EmailValidator.validate(input)
                                           ? null
-                                          : "Required",
+                                          : "Invalid email",
                                   onSaved: (input) {
                                     setState(() {
                                       _email = input;
@@ -284,44 +273,6 @@ class _RegisterPageState extends State<RegisterPage>
     }
   }
 
-  void addUser() {
-    Map<String, dynamic> data = {
-      ProfileConstants.NAME: {
-        ProfileConstants.FIRST_NAME: _firstName,
-        ProfileConstants.LAST_NAME: _lastName
-      },
-      ProfileConstants.EMAIL: _email
-    };
-    //check email id
-    Firestore.instance
-        .collection('users')
-        .add(data)
-        .then((DocumentReference doc) {
-      Map<String, dynamic> _uid = {ProfileConstants.USERNAME: doc.documentID};
-      doc.setData(_uid, merge: true);
-
-      setState(() {
-        final _profile = Provider.of<ProfileModel>(context, listen: false);
-        _profile.model[ProfileConstants.USERNAME] = doc.documentID;
-        _profile.model[ProfileConstants.EMAIL] = _email;
-        _profile.model[ProfileConstants.NAME][ProfileConstants.FIRST_NAME] =
-            _firstName;
-        _profile.model[ProfileConstants.NAME][ProfileConstants.LAST_NAME] =
-            _lastName;
-      });
-      storage
-          .write(key: ProfileConstants.USERNAME, value: doc.documentID)
-          .then((s) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfileCreationPage(),
-            ),
-            ModalRoute.withName("/Home"));
-      });
-    });
-  }
-
   void emailExistError() {
     setState(() {
       _loading = false;
@@ -354,42 +305,95 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  void _register() async {
-    FirebaseUser user = null;
-    try {
-      user = (await _auth.createUserWithEmailAndPassword(
-        email: _email,
-        password: _password,
-      ))
-          .user;
-      if (user != null) {
-        addUser();
-      } else {}
-    } on PlatformException catch (e) {
-      print(e.code);
-      switch (e.code) {
-        case "ERROR_EMAIL_ALREADY_IN_USE":
-          emailExistError();
-          break;
-        case "ERROR_INVALID_EMAIL ":
-          {
-            print("Email in use");
-          }
-          break;
-        case "ERROR_WEAK_PASSWORD ":
-          {
-            print("Email in use");
-          }
-          break;
-        default:
-          {
-            //statements;
-          }
-          break;
-      }
-    }
+  void displayDialog(String title, String message, List<Widget> actions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => new CupertinoAlertDialog(
+        title: new Text(title),
+        content: new Text(message),
+        actions: actions,
+      ),
+    );
+  }
 
-    // if (user != null) {
-    // } else {}
+  void _register() async {
+    setState(() {
+      _loading = true;
+    });
+    pushNotificationsManager.init().then((token) {
+      _profileProvider
+          .registerUser(_email, _password, _firstName, _lastName, token)
+          .then((value) {
+        if (value["hasError"]) {
+          setState(() {
+            _loading = false;
+          });
+          switch (value["error"]) {
+            case "ERROR_EMAIL_ALREADY_IN_USE":
+              displayDialog(
+                  "Email already in use",
+                  "Provided email-id is already registered with. Please user forgot password incase you forgot your password",
+                  [
+                    CupertinoDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        isDefaultAction: true,
+                        child: new Text("Close"))
+                  ]);
+              break;
+            case "ERROR_INVALID_EMAIL":
+              {
+                displayDialog("Email Id is invalid",
+                    "Please check the entered email id", [
+                  CupertinoDialogAction(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      isDefaultAction: true,
+                      child: new Text("Close"))
+                ]);
+              }
+              break;
+            case "ERROR_WEAK_PASSWORD":
+              {
+                displayDialog("Weak password",
+                    "Please use minimum 8 character alphanumeric password", [
+                  CupertinoDialogAction(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      isDefaultAction: true,
+                      child: new Text("Close"))
+                ]);
+              }
+              break;
+            default:
+              {
+                //statements;
+              }
+              break;
+          }
+        } else {
+          _profileProvider.isEmailVerified().then((value) {
+            if (value) {
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileCreationPage(),
+                  ),
+                  ModalRoute.withName("/Home"));
+            } else {
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EmailVeificationPage(),
+                  ),
+                  ModalRoute.withName("/Home"));
+            }
+          });
+        }
+      });
+    });
   }
 }

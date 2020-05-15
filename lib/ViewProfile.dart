@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:getreferred/ProfilePage.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/Util.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/profileCreationPage.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/ProfilePage.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/profileCreationPage.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
@@ -73,29 +75,27 @@ class _ViewProfileState extends State<ViewProfile> {
                 " " +
                 _profile.getModel[ProfileConstants.NAME]
                     [ProfileConstants.LAST_NAME],
-            style: TextStyle(
-                fontSize: 20, height: 1.38, fontWeight: FontWeight.w500),
+            style: GoogleFonts.lato(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           Text(
             _profile.getModel[ProfileConstants.HEADLINE],
-            style: TextStyle(
+            style: GoogleFonts.lato(
               fontSize: 16,
-              height: 1.38,
-              color: Colors.grey,
+              color: Colors.grey[600],
             ),
           ),
           Row(
             children: <Widget>[
-              UIUtil.getMasked(LineAwesomeIcons.map_marker, size: 12),
+              UIUtil.getMasked(LineAwesomeIcons.map_marker, size: 14),
               SizedBox(
                 width: 5,
               ),
               Text(
                 _profile.getModel[ProfileConstants.CURRENT_LOCATION],
-                style: TextStyle(
-                  fontSize: 12,
+                style: GoogleFonts.lato(
+                  fontSize: 14,
                   height: 1.38,
-                  color: Colors.grey,
+                  color: Colors.grey[500],
                 ),
               )
             ],
@@ -112,12 +112,7 @@ class _ViewProfileState extends State<ViewProfile> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text("Personal",
-                  style: Theme.of(context).textTheme.title.merge(
-                        TextStyle(
-                            fontWeight: FontWeight.bold,
-                            foreground: UIUtil.getTextGradient()),
-                      )),
+              Text("Personal", style: UIUtil.getTitleStyle(context)),
               IconButton(
                   icon: Icon(
                     Icons.edit,
@@ -183,17 +178,24 @@ class _ViewProfileState extends State<ViewProfile> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text("Experience",
-                  style: Theme.of(context).textTheme.title.merge(
-                        TextStyle(
-                            fontWeight: FontWeight.bold,
-                            foreground: UIUtil.getTextGradient()),
+                  style: Theme.of(context).textTheme.headline6.merge(
+                        GoogleFonts.lato(
+                            fontWeight: FontWeight.bold, color: Colors.black),
                       )),
               IconButton(
                   icon: Icon(
                     Icons.edit,
                     color: Colors.cyan,
                   ),
-                  onPressed: () {})
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileCreationPage(
+                                isedit: true,
+                              )),
+                    );
+                  })
             ],
           ),
           SizedBox(
@@ -221,8 +223,8 @@ class _ViewProfileState extends State<ViewProfile> {
             leading: UIUtil.getMasked(LineAwesomeIcons.briefcase, size: 40),
             title: Text(
               companies[index][ProfileConstants.COMPANY_NAME],
-              style: TextStyle(
-                  fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
+              style: GoogleFonts.lato(
+                  fontSize: 16, height: 1.38, fontWeight: FontWeight.w600),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -231,11 +233,11 @@ class _ViewProfileState extends State<ViewProfile> {
                   companies[index][ProfileConstants.COMPANY_POSITION] +
                       " • `" +
                       companies[index][ProfileConstants.COMPANY_EMPLOYE_TYPE],
-                  style: TextStyle(
+                  style: GoogleFonts.lato(
                       fontSize: 14,
                       color: Colors.grey,
                       height: 1.38,
-                      fontWeight: FontWeight.w500),
+                      fontWeight: FontWeight.w600),
                 ),
                 Row(
                   children: <Widget>[
@@ -243,11 +245,11 @@ class _ViewProfileState extends State<ViewProfile> {
                         companies[index][ProfileConstants.COMPANY_FROM] +
                             " - " +
                             companies[index][ProfileConstants.COMPANY_TO],
-                        style: TextStyle(
+                        style: GoogleFonts.lato(
                             fontSize: 14,
                             height: 1.38,
                             color: Colors.grey,
-                            fontWeight: FontWeight.w500))
+                            fontWeight: FontWeight.w600))
                   ],
                 ),
                 SizedBox(
@@ -259,11 +261,11 @@ class _ViewProfileState extends State<ViewProfile> {
                     Text(
                         companies[index][ProfileConstants.COMPANY_LOCATION]
                             .toString(),
-                        style: TextStyle(
+                        style: GoogleFonts.lato(
                             fontSize: 12,
                             height: 1.38,
                             color: Colors.grey,
-                            fontWeight: FontWeight.w500))
+                            fontWeight: FontWeight.w600))
                   ],
                 )
               ],
@@ -287,17 +289,24 @@ class _ViewProfileState extends State<ViewProfile> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text("Language",
-                  style: Theme.of(context).textTheme.title.merge(
-                        TextStyle(
-                            fontWeight: FontWeight.bold,
-                            foreground: UIUtil.getTextGradient()),
+                  style: Theme.of(context).textTheme.headline6.merge(
+                        GoogleFonts.lato(
+                            fontWeight: FontWeight.bold, color: Colors.black),
                       )),
               IconButton(
                   icon: Icon(
                     Icons.edit,
                     color: Colors.cyan,
                   ),
-                  onPressed: () {})
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileCreationPage(
+                                isedit: true,
+                              )),
+                    );
+                  })
             ],
           ),
           SizedBox(
@@ -325,33 +334,33 @@ class _ViewProfileState extends State<ViewProfile> {
             leading: UIUtil.getMasked(LineAwesomeIcons.language, size: 40),
             title: Text(
               languages[index][ProfileConstants.LANGUAGE_NAME],
-              style: TextStyle(
-                  fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
+              style: GoogleFonts.lato(
+                  fontSize: 16, height: 1.38, fontWeight: FontWeight.w600),
             ),
             subtitle: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 if (languages[index][ProfileConstants.LANGUAGE_SPEAK])
                   Text("Speak ",
-                      style: TextStyle(
+                      style: GoogleFonts.lato(
                           fontSize: 14,
                           height: 1.38,
                           color: Colors.grey,
-                          fontWeight: FontWeight.w500)),
+                          fontWeight: FontWeight.w600)),
                 if (languages[index][ProfileConstants.LANGUAGE_READ])
                   Text("Read ",
-                      style: TextStyle(
+                      style: GoogleFonts.lato(
                           fontSize: 14,
                           height: 1.38,
                           color: Colors.grey,
-                          fontWeight: FontWeight.w500)),
+                          fontWeight: FontWeight.w600)),
                 if (languages[index][ProfileConstants.LANGUAGE_WRITE])
                   Text("Write ",
-                      style: TextStyle(
+                      style: GoogleFonts.lato(
                           fontSize: 14,
                           height: 1.38,
                           color: Colors.grey,
-                          fontWeight: FontWeight.w500)),
+                          fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -372,17 +381,24 @@ class _ViewProfileState extends State<ViewProfile> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text("Additional Information",
-                  style: Theme.of(context).textTheme.title.merge(
-                        TextStyle(
-                            fontWeight: FontWeight.bold,
-                            foreground: UIUtil.getTextGradient()),
+                  style: Theme.of(context).textTheme.headline6.merge(
+                        GoogleFonts.lato(
+                            fontWeight: FontWeight.bold, color: Colors.black),
                       )),
               IconButton(
                   icon: Icon(
                     Icons.edit,
                     color: Colors.cyan,
                   ),
-                  onPressed: () {})
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileCreationPage(
+                                isedit: true,
+                              )),
+                    );
+                  })
             ],
           ),
           ListView(
@@ -396,15 +412,15 @@ class _ViewProfileState extends State<ViewProfile> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text("Have you handled a team?",
-                              style:
-                                  TextStyle(height: 1.38, color: Colors.grey)),
+                              style: GoogleFonts.lato(
+                                  height: 1.38, color: Colors.grey)),
                           Text(
                             _profile.getModel[ProfileConstants.ADDITIONAL_INFO]
                                 [ProfileConstants.HANDLED_TEAM],
-                            style: TextStyle(
+                            style: GoogleFonts.lato(
                                 height: 1.38,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w500),
+                                fontWeight: FontWeight.w600),
                           ),
                         ])),
                 Container(
@@ -414,16 +430,16 @@ class _ViewProfileState extends State<ViewProfile> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text("Are you willing to work 6 days a week?",
-                              style:
-                                  TextStyle(height: 1.38, color: Colors.grey)),
+                              style: GoogleFonts.lato(
+                                  height: 1.38, color: Colors.grey)),
                           Text(
                               _profile.getModel[
                                       ProfileConstants.ADDITIONAL_INFO]
                                   [ProfileConstants.SIX_DAYS_WEEK],
-                              style: TextStyle(
+                              style: GoogleFonts.lato(
                                   height: 1.38,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500)),
+                                  fontWeight: FontWeight.w600)),
                         ])),
                 Container(
                     padding:
@@ -432,15 +448,15 @@ class _ViewProfileState extends State<ViewProfile> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text("Are you willing to relocate?",
-                              style:
-                                  TextStyle(height: 1.38, color: Colors.grey)),
+                              style: GoogleFonts.lato(
+                                  height: 1.38, color: Colors.grey)),
                           Text(
                               _profile.getModel[ProfileConstants
                                   .ADDITIONAL_INFO][ProfileConstants.RELOCATE],
-                              style: TextStyle(
+                              style: GoogleFonts.lato(
                                   height: 1.38,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500)),
+                                  fontWeight: FontWeight.w600)),
                         ])),
                 Container(
                     padding:
@@ -450,16 +466,16 @@ class _ViewProfileState extends State<ViewProfile> {
                         children: [
                           Text(
                               "Are you open to joining an early stage start-up?",
-                              style:
-                                  TextStyle(height: 1.38, color: Colors.grey)),
+                              style: GoogleFonts.lato(
+                                  height: 1.38, color: Colors.grey)),
                           Text(
                               _profile.getModel[
                                       ProfileConstants.ADDITIONAL_INFO]
                                   [ProfileConstants.EARLY_STAGE_STARTUP],
-                              style: TextStyle(
+                              style: GoogleFonts.lato(
                                   height: 1.38,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500)),
+                                  fontWeight: FontWeight.w600)),
                         ])),
                 Container(
                     padding:
@@ -468,16 +484,16 @@ class _ViewProfileState extends State<ViewProfile> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text("Willingness to Travel?",
-                              style:
-                                  TextStyle(height: 1.38, color: Colors.grey)),
+                              style: GoogleFonts.lato(
+                                  height: 1.38, color: Colors.grey)),
                           Text(
                               _profile.getModel[
                                       ProfileConstants.ADDITIONAL_INFO]
                                   [ProfileConstants.TRAVEL_WILLINGNESS],
-                              style: TextStyle(
+                              style: GoogleFonts.lato(
                                   height: 1.38,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500)),
+                                  fontWeight: FontWeight.w600)),
                         ])),
                 Container(
                     padding:
@@ -486,16 +502,16 @@ class _ViewProfileState extends State<ViewProfile> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text("Work Permit for USA",
-                              style:
-                                  TextStyle(height: 1.38, color: Colors.grey)),
+                              style: GoogleFonts.lato(
+                                  height: 1.38, color: Colors.grey)),
                           Text(
                               _profile.getModel[
                                       ProfileConstants.ADDITIONAL_INFO]
                                   [ProfileConstants.USA_PREMIT],
-                              style: TextStyle(
+                              style: GoogleFonts.lato(
                                   height: 1.38,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500)),
+                                  fontWeight: FontWeight.w600)),
                         ])),
               ]),
         ],
@@ -512,17 +528,24 @@ class _ViewProfileState extends State<ViewProfile> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text("Resume",
-                  style: Theme.of(context).textTheme.title.merge(
-                        TextStyle(
-                            fontWeight: FontWeight.bold,
-                            foreground: UIUtil.getTextGradient()),
+                  style: Theme.of(context).textTheme.headline6.merge(
+                        GoogleFonts.lato(
+                            fontWeight: FontWeight.bold, color: Colors.black),
                       )),
               IconButton(
                   icon: Icon(
                     Icons.edit,
                     color: Colors.cyan,
                   ),
-                  onPressed: () {})
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileCreationPage(
+                                isedit: true,
+                              )),
+                    );
+                  })
             ],
           ),
           Container(
@@ -534,8 +557,9 @@ class _ViewProfileState extends State<ViewProfile> {
                     ? Container(
                         child: Center(
                             child: Text(
-                          "No resume attached!",
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                          "No resume attached",
+                          style: GoogleFonts.lato(
+                              color: Colors.grey, fontSize: 16),
                         )),
                       )
                     : Container(
@@ -547,10 +571,8 @@ class _ViewProfileState extends State<ViewProfile> {
                                   vertical: 10, horizontal: 10),
                               child: Text(
                                 _profile.getModel[ProfileConstants.RESUME],
-                                style: TextStyle(
-                                    color: Colors.cyan,
-                                    fontStyle: FontStyle.italic,
-                                    fontSize: 16),
+                                style: GoogleFonts.lato(
+                                    color: Colors.cyan, fontSize: 16),
                               ),
                             ),
                           ),
@@ -577,17 +599,24 @@ class _ViewProfileState extends State<ViewProfile> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text("Education",
-                  style: Theme.of(context).textTheme.title.merge(
-                        TextStyle(
-                            fontWeight: FontWeight.bold,
-                            foreground: UIUtil.getTextGradient()),
+                  style: Theme.of(context).textTheme.headline6.merge(
+                        GoogleFonts.lato(
+                            fontWeight: FontWeight.bold, color: Colors.black),
                       )),
               IconButton(
                   icon: Icon(
                     Icons.edit,
                     color: Colors.cyan,
                   ),
-                  onPressed: () {})
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileCreationPage(
+                                isedit: true,
+                              )),
+                    );
+                  })
             ],
           ),
           SizedBox(
@@ -616,8 +645,8 @@ class _ViewProfileState extends State<ViewProfile> {
                 UIUtil.getMasked(LineAwesomeIcons.graduation_cap, size: 40),
             title: Text(
               colleges[index][ProfileConstants.COLLEGE_NAME],
-              style: TextStyle(
-                  fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
+              style: GoogleFonts.lato(
+                  fontSize: 16, height: 1.38, fontWeight: FontWeight.w600),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,21 +658,21 @@ class _ViewProfileState extends State<ViewProfile> {
                       " [" +
                       colleges[index][ProfileConstants.COLLEGE_COURSE_TYPE] +
                       "]",
-                  style: TextStyle(
+                  style: GoogleFonts.lato(
                       fontSize: 14,
                       color: Colors.grey,
                       height: 1.38,
-                      fontWeight: FontWeight.w500),
+                      fontWeight: FontWeight.w600),
                 ),
                 Text(
                     colleges[index][ProfileConstants.COLLEGE_FROM] +
                         " - " +
                         colleges[index][ProfileConstants.COLLEGE_TO],
-                    style: TextStyle(
+                    style: GoogleFonts.lato(
                         fontSize: 14,
                         height: 1.38,
                         color: Colors.grey,
-                        fontWeight: FontWeight.w500))
+                        fontWeight: FontWeight.w600))
               ],
             ),
           ),
@@ -667,16 +696,16 @@ class _ViewProfileState extends State<ViewProfile> {
           children: <Widget>[
             Text(
               data,
-              style: TextStyle(
+              style: GoogleFonts.lato(
                 fontSize: 16,
                 height: 1.38,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: Colors.black,
               ),
             ),
             Text(
               label,
-              style: TextStyle(
+              style: GoogleFonts.lato(
                 fontSize: 12,
                 height: 1.38,
                 color: Colors.grey,
@@ -690,7 +719,7 @@ class _ViewProfileState extends State<ViewProfile> {
 
   @override
   Widget build(BuildContext context) {
-    final _profile = Provider.of<ProfileModel>(context);
+    final _profile = Provider.of<ProfileProvider>(context).getProfile();
     String getSafeValue(item) {
       return item == null ? '' : item;
     }
@@ -732,31 +761,6 @@ class _ViewProfileState extends State<ViewProfile> {
       }
     }
 
-    Future uploadPic(BuildContext context, File img) async {
-      StorageReference storageReference = FirebaseStorage.instance.ref().child(
-          "profilePictures/" +
-              Provider.of<ProfileModel>(context, listen: false)
-                  .model[ProfileConstants.USERNAME]);
-      final StorageUploadTask uploadTask = storageReference.putFile(img);
-      final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
-      final String url = (await downloadUrl.ref.getDownloadURL());
-      Provider.of<ProfileModel>(context, listen: false)
-          .setValue(ProfileConstants.PROFILE_PIC_URL, url);
-      print("URL is $url");
-    }
-
-    Future getImage() async {
-      ImagePicker.pickImage(source: ImageSource.gallery).then((image) {
-        if (image != null)
-          _cropImage(image).then((img) {
-            if (img != null) {
-              uploadPic(context, img);
-              print('Image Path $img');
-            }
-          });
-      });
-    }
-
     List _buildList(int count) {
       List<Widget> listItems = List();
       listItems.addAll([
@@ -771,95 +775,180 @@ class _ViewProfileState extends State<ViewProfile> {
     }
 
     return Scaffold(
+        primary: true,
+        backgroundColor: Colors.cyan,
         body: SafeArea(
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: <Widget>[
-          SliverAppBar(
-            stretch: true,
-            centerTitle: false,
-            expandedHeight: 150.0,
-            floating: false,
-            pinned: true,
-            snap: false,
-            elevation: 5,
-            bottom: PreferredSize(
-                child: AnimatedContainer(
-                  curve: Curves.linear,
-                  alignment: _align,
-                  duration: const Duration(milliseconds: 300),
-                  padding: EdgeInsets.all(10),
-                  width: MediaQuery.of(context).size.width,
-                  child: !profview
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              _profile.getModel[ProfileConstants.NAME]
-                                      [ProfileConstants.FIRST_NAME] +
-                                  " " +
-                                  _profile.getModel[ProfileConstants.NAME]
-                                      [ProfileConstants.LAST_NAME],
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.38,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              _profile.getModel[ProfileConstants.HEADLINE],
-                              style: TextStyle(
-                                fontSize: 14,
-                                height: 1.38,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Container(),
-                ),
-                preferredSize: Size(20, 10)),
-            backgroundColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-                stretchModes: [StretchMode.zoomBackground],
-                centerTitle: true,
-                collapseMode: CollapseMode.parallax,
-                title: profview
-                    ? Container(
-                        child: Wrap(
-                        direction: Axis.vertical,
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
+          child: Container(
+            color: Colors.white,
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: <Widget>[
+                SliverAppBar(
+                  stretch: true,
+                  centerTitle: false,
+                  expandedHeight: 150.0,
+                  floating: false,
+                  pinned: true,
+                  snap: false,
+                  elevation: 5,
+                  bottom: PreferredSize(
+                      child: Row(
                         children: <Widget>[
-                          CircleAvatar(
-                            backgroundColor: Colors.cyan,
-                            radius: 30,
-                            child: Hero(
-                                tag: "profilePic",
-                                child: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: _profile.getModel[
-                                        ProfileConstants.PROFILE_PIC_URL],
-                                    placeholder: (context, url) =>
-                                        CircularProgressIndicator(),
-                                    errorWidget: (context, url, error) =>
-                                        Icon(Icons.error),
-                                    fit: BoxFit.cover,
-                                    width: 60.0,
-                                    height: 60.0,
-                                  ),
-                                )),
-                          )
+                          !profview
+                              ? BackButton(
+                                  color: Colors.cyan,
+                                )
+                              : Container(),
+                          Expanded(
+                            child: AnimatedContainer(
+                              curve: Curves.linear,
+                              alignment: _align,
+                              duration: const Duration(milliseconds: 300),
+                              padding: EdgeInsets.all(10),
+                              width: MediaQuery.of(context).size.width,
+                              child: !profview
+                                  ? Row(
+                                      children: <Widget>[
+                                        CircleAvatar(
+                                          backgroundColor: Colors.cyan,
+                                          radius: 18,
+                                          child: Hero(
+                                              tag: "profilePic",
+                                              child: ClipOval(
+                                                child: CachedNetworkImage(
+                                                  imageUrl: _profile.getModel[
+                                                      ProfileConstants
+                                                          .PROFILE_PIC_URL],
+                                                  placeholder: (context, url) =>
+                                                      CircularProgressIndicator(),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Icon(Icons.error),
+                                                  fit: BoxFit.cover,
+                                                  width: 36.0,
+                                                  height: 36.0,
+                                                ),
+                                              )),
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Text(
+                                              _profile.getModel[
+                                                          ProfileConstants.NAME]
+                                                      [ProfileConstants
+                                                          .FIRST_NAME] +
+                                                  " " +
+                                                  _profile.getModel[
+                                                          ProfileConstants.NAME]
+                                                      [ProfileConstants
+                                                          .LAST_NAME],
+                                              style: GoogleFonts.lato(
+                                                  fontSize: 16,
+                                                  height: 1.38,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              _profile.getModel[
+                                                  ProfileConstants.HEADLINE],
+                                              style: GoogleFonts.lato(
+                                                fontSize: 14,
+                                                height: 1.38,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    )
+                                  : Container(),
+                            ),
+                          ),
                         ],
-                      ))
-                    : null,
-                background: Image.asset(
-                  'assets/images/banner.jpg',
-                  fit: BoxFit.cover,
-                )),
+                      ),
+                      preferredSize: Size(20, 10)),
+                  backgroundColor: Colors.white,
+                  leading: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      height: 2,
+                      width: 2,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(0),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.arrow_back, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  flexibleSpace: FlexibleSpaceBar(
+                      stretchModes: [StretchMode.zoomBackground],
+                      centerTitle: true,
+                      collapseMode: CollapseMode.parallax,
+                      title: profview
+                          ? Container(
+                              child: Wrap(
+                              direction: Axis.vertical,
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: <Widget>[
+                                CircleAvatar(
+                                  backgroundColor: Colors.cyan,
+                                  radius: 30,
+                                  child: Hero(
+                                      tag: "profilePic",
+                                      child: ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: _profile.getModel[
+                                              ProfileConstants.PROFILE_PIC_URL],
+                                          placeholder: (context, url) =>
+                                              CircularProgressIndicator(),
+                                          errorWidget: (context, url, error) =>
+                                              Icon(Icons.error),
+                                          fit: BoxFit.cover,
+                                          width: 60.0,
+                                          height: 60.0,
+                                        ),
+                                      )),
+                                )
+                              ],
+                            ))
+                          : null,
+                      background: _profile
+                                      .getModel[ProfileConstants.COVER_URL] ==
+                                  '' ||
+                              _profile.getModel[ProfileConstants.COVER_URL] ==
+                                  null
+                          ? Image.asset(
+                              'assets/images/banner.jpg',
+                              fit: BoxFit.cover,
+                            )
+                          : CachedNetworkImage(
+                              imageUrl:
+                                  _profile.getModel[ProfileConstants.COVER_URL],
+                              placeholder: (context, url) =>
+                                  Center(child: CircularProgressIndicator()),
+                              errorWidget: (context, url, error) =>
+                                  Icon(Icons.error),
+                              fit: BoxFit.cover,
+                            )),
+                ),
+                new SliverList(
+                    delegate: new SliverChildListDelegate(_buildList(50))),
+              ],
+            ),
           ),
-          new SliverList(delegate: new SliverChildListDelegate(_buildList(50))),
-        ],
-      ),
-    ));
+        ));
   }
 }

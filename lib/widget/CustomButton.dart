@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:getreferred/helper/Util.dart';
+import 'package:ReferAll/helper/Util.dart';
 
 class CustomButton extends StatelessWidget {
   final Function onTap;
@@ -47,9 +47,13 @@ class CustomButton extends StatelessWidget {
                   ),
                 ]
               : [],
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(15),
         ),
         child: Material(
+          color: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
           child: InkWell(
               onTap: onTap == null ? () {} : onTap,
               child: Container(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
 
 import '../autocompeletescreen.dart';
 

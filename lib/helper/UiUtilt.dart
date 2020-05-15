@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:getreferred/helper/Util.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class UIUtil {
   static Widget getBackButton(context) {
@@ -31,5 +32,10 @@ class UIUtil {
           size: size,
           color: Colors.cyan,
         ));
+  }
+
+  static TextStyle getTitleStyle(BuildContext context) {
+    return Theme.of(context).textTheme.headline6.merge(
+        GoogleFonts.lato(fontWeight: FontWeight.bold, color: Colors.black));
   }
 }

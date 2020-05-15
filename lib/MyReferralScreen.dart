@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:getreferred/BLoc/MyReferralFeedProvider.dart';
-import 'package:getreferred/MyReferralItem.dart';
+import 'package:ReferAll/BLoc/MyReferralFeedProvider.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/MyReferralItem.dart';
 
-import 'package:getreferred/ReferralItem.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/model/ProfileModel.dart';
+import 'package:ReferAll/ReferralItem.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class MyReferralScreen extends StatefulWidget {
@@ -45,15 +48,76 @@ class _MyReferralScreenState extends State<MyReferralScreen>
     if (_myReferralTabIndex == 0) {
       return _referralFeed();
     } else {
-      return Container(
-        child: Text("data"),
-      );
+      return _requestedReferralFeed();
     }
+  }
+
+  Widget _requestedReferralFeed() {
+    ProfileModel _profile =
+        Provider.of<ProfileProvider>(context, listen: false).getProfile();
+    return FutureBuilder(
+        future: _myReferralFeedProvider
+            .getRequestedFeed(_profile.getModel[ProfileConstants.USERNAME]),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData)
+            return Container(
+                alignment: FractionalOffset.center,
+                padding: const EdgeInsets.only(top: 10.0),
+                child: CircularProgressIndicator());
+          else {
+            if (snapshot.data.keys.length == 0) {
+              return Container(
+                color: Colors.white60,
+                child: Column(
+                  children: <Widget>[
+                    Spacer(),
+                    Text(
+                      "No referral request",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline5
+                          .merge(GoogleFonts.lato(fontWeight: FontWeight.bold)),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      child: Text(
+                        "There is no exercise better for the heart than reaching down and lifting people up",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1.merge(
+                            GoogleFonts.lato(fontWeight: FontWeight.w500)),
+                      ),
+                    ),
+                    Center(
+                      child: Image.asset("assets/images/empty_feed4.png"),
+                    ),
+                    Spacer(),
+                  ],
+                ),
+              );
+            }
+            return ListView(
+                physics: AlwaysScrollableScrollPhysics(),
+                shrinkWrap: true,
+                children: [
+                  for (var k in snapshot.data.keys)
+                    ReferralItem(
+                      referralModel: snapshot.data[k],
+                      commentPage: false,
+                    ),
+                  SizedBox(
+                    height: 40,
+                  )
+                ]);
+          }
+        });
   }
 
   Widget _referralFeed() {
     _myReferralFeedProvider = Provider.of<MyReferralFeedProvider>(context);
-    _profile = Provider.of<ProfileModel>(context);
+    _profile = Provider.of<ProfileProvider>(context).getProfile();
     return FutureBuilder(
         future: _myReferralFeedProvider
             .getMyReferralFeed(_profile.getModel[ProfileConstants.USERNAME]),
@@ -64,6 +128,39 @@ class _MyReferralScreenState extends State<MyReferralScreen>
                 padding: const EdgeInsets.only(top: 10.0),
                 child: CircularProgressIndicator());
           else {
+            if (snapshot.data.keys.length == 0) {
+              return Container(
+                color: Colors.white60,
+                child: Column(
+                  children: <Widget>[
+                    Spacer(),
+                    Text(
+                      "No referral posted",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline5
+                          .merge(GoogleFonts.lato(fontWeight: FontWeight.bold)),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      child: Text(
+                        "There is no exercise better for the heart than reaching down and lifting people up",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1.merge(
+                            GoogleFonts.lato(fontWeight: FontWeight.w500)),
+                      ),
+                    ),
+                    Center(
+                      child: Image.asset("assets/images/empty_feed5.png"),
+                    ),
+                    Spacer(),
+                  ],
+                ),
+              );
+            }
             return ListView(
                 physics: AlwaysScrollableScrollPhysics(),
                 shrinkWrap: true,
@@ -82,55 +179,58 @@ class _MyReferralScreenState extends State<MyReferralScreen>
 
   @override
   Widget build(BuildContext context) {
-    return NestedScrollView(
-      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-        return <Widget>[
-          SliverAppBar(
-            title: Text(
-              "My Referrals",
-              style: Theme.of(context).textTheme.headline.merge(TextStyle(
-                  fontWeight: FontWeight.bold,
-                  foreground: UIUtil.getTextGradient())),
+    return DefaultTabController(
+      length: myReferralTabs.length,
+      child: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            SliverPersistentHeader(
+              delegate: _SliverAppBarDelegate(
+                TabBar(
+                  indicatorColor: Util.getColor2(),
+                  indicatorWeight: 3,
+                  labelColor: Util.getColor2(),
+                  unselectedLabelColor: Theme.of(context).splashColor,
+                  tabs: [
+                    Tab(text: "Posted"),
+                    Tab(text: "Requested"),
+                  ],
+                ),
+              ),
+              pinned: true,
             ),
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.white,
-            centerTitle: false,
-            expandedHeight: 105.0,
-            pinned: true,
-            floating: true,
-            snap: true,
-            elevation: 5,
-            flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.none,
-                background: Container(
-                  child: Column(
-                    children: <Widget>[
-                      SizedBox(
-                        height: 45,
-                      ),
-                      TabBar(
-                        tabs: myReferralTabs
-                            .map((f) => Container(
-                                  padding: EdgeInsets.all(16),
-                                  child: Text(
-                                    f,
-                                    style: Theme.of(context).textTheme.title,
-                                  ),
-                                ))
-                            .toList(),
-                        controller: _myReferralTabController,
-                        indicatorColor: Colors.cyan[500],
-                        indicatorWeight: 5,
-                        labelColor: Colors.black,
-                        unselectedLabelColor: Theme.of(context).splashColor,
-                      ),
-                    ],
-                  ),
-                )),
-          )
-        ];
-      },
-      body: Container(color: Colors.transparent, child: _feedTabContent()),
+          ];
+        },
+        body: TabBarView(children: [
+          Container(color: Colors.transparent, child: _referralFeed()),
+          Container(color: Colors.transparent, child: _requestedReferralFeed()),
+        ]),
+      ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return new Container(
+      color: Colors.white,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

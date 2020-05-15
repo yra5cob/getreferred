@@ -1,9 +1,14 @@
+import 'package:ReferAll/BLoc/DynamicLinkProvider.dart';
+import 'package:ReferAll/emailVerificationPage.dart';
 import 'package:flutter/material.dart';
-import 'package:getreferred/Home.dart';
-import 'package:getreferred/LoginPage.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/profileCreationPage.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/Home.dart';
+import 'package:ReferAll/LoginPage.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/profileCreationPage.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -16,20 +21,24 @@ class LoadingScreen extends StatefulWidget {
 
 class _LoadingScreenState extends State<LoadingScreen> {
   final storage = new FlutterSecureStorage();
+  DynamicLinkProvider dynamicLinkProvider;
+  ProfileProvider _profileProvider;
   @override
   void initState() {
     super.initState();
-    final _profileModel = Provider.of<ProfileModel>(context, listen: false);
-    storage.read(key: ProfileConstants.USERNAME).then((userName) {
-      if (userName != null) {
-        _profileModel.setValue(ProfileConstants.USERNAME, userName);
-        // StorageReference storageReference =
-        //     FirebaseStorage.instance.ref().child("profilePictures/" + userName);
-        // storageReference.getDownloadURL().then((onValue) {
-        //   _profileModel.setValue(ProfileConstants.PROFILE_PIC_URL, onValue);
-        Firestore.instance.document('users/$userName').get().then((data) {
-          if (data.exists) {
-            _profileModel.setAll(data.data);
+    dynamicLinkProvider =
+        Provider.of<DynamicLinkProvider>(context, listen: false);
+    dynamicLinkProvider.initDynamicLinks(context);
+    _profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    _profileProvider.loadProfile().then((_profile) {
+      if (_profile.getModel[ProfileConstants.EMAIL].toString().isEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      } else {
+        _profileProvider.isEmailVerified().then((value) {
+          if (value) {
             Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
@@ -37,18 +46,14 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 ),
                 ModalRoute.withName("/Home"));
           } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LoginPage()),
-            );
+            Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EmailVeificationPage(),
+                ),
+                ModalRoute.withName("/Home"));
           }
-          // });
         });
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
       }
     });
   }
@@ -59,7 +64,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
       body: Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        color: Colors.green[800],
+        decoration: BoxDecoration(
+            gradient:
+                LinearGradient(colors: [Util.getColor1(), Util.getColor2()])),
         child: Center(
           child: Text(
             "Loading..",

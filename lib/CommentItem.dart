@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:getreferred/constants/CommentsConstant.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/Util.dart';
-import 'package:getreferred/model/CommentModel.dart';
+import 'package:ReferAll/constants/CommentsConstant.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/CommentModel.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class CommentItem extends StatelessWidget {
@@ -69,13 +70,13 @@ class CommentItem extends StatelessWidget {
                                 commentModel.getModel[CommentsConstant.USER]
                                         [ProfileConstants.NAME]
                                     [ProfileConstants.LAST_NAME],
-                            style: TextStyle(
+                            style: GoogleFonts.lato(
                                 fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           Text(
                             commentModel.getModel[CommentsConstant.USER]
                                 [ProfileConstants.HEADLINE],
-                            style: TextStyle(
+                            style: GoogleFonts.lato(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.grey[500]),
@@ -83,7 +84,7 @@ class CommentItem extends StatelessWidget {
                           Text(
                             Util.readTimestamp(commentModel
                                 .getModel[CommentsConstant.DATETIME]),
-                            style: TextStyle(
+                            style: GoogleFonts.lato(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.grey[500]),
@@ -93,7 +94,7 @@ class CommentItem extends StatelessWidget {
                           ),
                           Text(
                             commentModel.getModel[CommentsConstant.COMMENT],
-                            style: TextStyle(fontSize: 14, height: 1.38),
+                            style: GoogleFonts.lato(fontSize: 14, height: 1.38),
                           )
                         ],
                       ),
@@ -118,7 +119,7 @@ class CommentItem extends StatelessWidget {
                                               CommentsConstant.NUM_REPLIES]
                                           .toString() +
                                       " replies",
-                                  style: TextStyle(color: Colors.black)),
+                                  style: GoogleFonts.lato(color: Colors.black)),
                             ],
                           ),
                         )
@@ -137,7 +138,8 @@ class CommentItem extends StatelessWidget {
                             0)
                           Text(
                             "Show previous replies...",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style:
+                                GoogleFonts.lato(fontWeight: FontWeight.bold),
                           )
                       ],
                     ),
@@ -200,7 +202,7 @@ class CommentItem extends StatelessWidget {
                                                             [CommentsConstant.USER]
                                                         [ProfileConstants.NAME]
                                                     [ProfileConstants.LAST_NAME],
-                                            style: TextStyle(
+                                            style: GoogleFonts.lato(
                                                 color: Colors.black,
                                                 fontWeight: FontWeight.bold),
                                           ),
@@ -210,7 +212,7 @@ class CommentItem extends StatelessWidget {
                                                             .LAST_REPLY]
                                                     [CommentsConstant.USER]
                                                 [ProfileConstants.HEADLINE],
-                                            style: TextStyle(
+                                            style: GoogleFonts.lato(
                                                 fontWeight: FontWeight.w300,
                                                 fontSize: 12),
                                           ),
@@ -219,7 +221,7 @@ class CommentItem extends StatelessWidget {
                                                         .getModel[
                                                     CommentsConstant.USER]
                                                 [CommentsConstant.DATETIME]),
-                                            style: TextStyle(
+                                            style: GoogleFonts.lato(
                                                 fontWeight: FontWeight.w300,
                                                 fontSize: 12),
                                           ),
@@ -230,8 +232,8 @@ class CommentItem extends StatelessWidget {
                                             commentModel.getModel[
                                                     CommentsConstant.LAST_REPLY]
                                                 [CommentsConstant.COMMENT],
-                                            style:
-                                                TextStyle(color: Colors.black),
+                                            style: GoogleFonts.lato(
+                                                color: Colors.black),
                                           )
                                         ],
                                       ),

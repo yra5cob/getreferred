@@ -1,19 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:getreferred/BLoc/CommentsBloc.dart';
-import 'package:getreferred/BLoc/CommentsProvider.dart';
-import 'package:getreferred/BLoc/FeedProvider.dart';
-import 'package:getreferred/BLoc/MyReferralFeedProvider.dart';
-import 'package:getreferred/CommentItem.dart';
-import 'package:getreferred/ReferralItem.dart';
-import 'package:getreferred/constants/CommentsConstant.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/constants/ReferralConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/model/CommentModel.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/model/ReferralModel.dart';
+import 'package:ReferAll/BLoc/FeedProvider.dart';
+import 'package:ReferAll/BLoc/MyReferralFeedProvider.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/CommentItem.dart';
+import 'package:ReferAll/ReferralItem.dart';
+import 'package:ReferAll/constants/CommentsConstant.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/constants/ReferralConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/model/CommentModel.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/model/ReferralModel.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
 
@@ -21,21 +21,28 @@ import 'helper/Util.dart';
 
 class Comments extends StatefulWidget {
   final ReferralModel referralModel;
+  final bool shared;
+  final String referralId;
 
-  const Comments({Key key, this.referralModel}) : super(key: key);
+  const Comments(
+      {Key key, this.referralModel, this.shared = false, this.referralId = ""})
+      : super(key: key);
 
   @override
-  _CommentsState createState() => _CommentsState(referralModel);
+  _CommentsState createState() {
+    return _CommentsState(referralModel, shared, referralId);
+  }
 }
 
 class _CommentsState extends State<Comments> {
   final TextEditingController _commentController = new TextEditingController();
-
+  final bool shared;
+  final String referralId;
   final firestore = Firestore.instance;
-  final ReferralModel referralModel;
-  var _feedProvider;
+  ReferralModel referralModel;
+  FeedProvider _feedProvider;
 
-  _CommentsState(this.referralModel);
+  _CommentsState(this.referralModel, this.shared, this.referralId);
 
   Widget buildCommentItem(CommentModel d) {
     return new CommentItem(
@@ -44,13 +51,30 @@ class _CommentsState extends State<Comments> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  Future<ReferralModel> getReferralModel() async {
+    if (referralModel == null) {
+      final Map<String, dynamic> args =
+          ModalRoute.of(context).settings.arguments;
+      _feedProvider = Provider.of<FeedProvider>(context, listen: false);
+      var _profile =
+          Provider.of<ProfileProvider>(context, listen: false).getProfile();
+      referralModel = await _feedProvider.getReferral(
+          _profile.getModel[ProfileConstants.USERNAME], args['referralId']);
+      return referralModel;
+    } else
+      return referralModel;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final _profile = Provider.of<ProfileModel>(context);
-    if (referralModel.getFeedType == "public") {
-      _feedProvider = Provider.of<FeedProvider>(context);
-    } else {
-      _feedProvider = Provider.of<MyReferralFeedProvider>(context);
-    }
+    final _profile = Provider.of<ProfileProvider>(context).getProfile();
+
+    _feedProvider = Provider.of<FeedProvider>(context);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -61,10 +85,6 @@ class _CommentsState extends State<Comments> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.grey, blurRadius: 6, offset: Offset(0, 1))
-              ],
             ),
             child: Row(
               children: <Widget>[
@@ -83,7 +103,9 @@ class _CommentsState extends State<Comments> {
                         color: Colors.cyan,
                       ),
                     ),
-                    onPressed: () {}),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    }),
                 Spacer(),
                 IconButton(
                     icon: ShaderMask(
@@ -107,48 +129,98 @@ class _CommentsState extends State<Comments> {
         ),
       ),
       backgroundColor: Colors.white,
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        child: ListView(
-          children: <Widget>[
-            ReferralItem(
-              referralModel: referralModel,
-              commentPage: true,
-            ),
-            Divider(
-              color: Colors.grey,
-            ),
-            SizedBox(
-              height: 30,
-            ),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 8),
-              child: FutureBuilder<Map<String, CommentModel>>(
-                  future: _feedProvider.getComments(
-                      referralModel.getModel[ReferralConstants.REFERRAL_ID]),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return ListView(
-                        physics: ClampingScrollPhysics(),
-                        shrinkWrap: true,
-                        children: [
-                          for (var k in snapshot.data.keys)
-                            buildCommentItem(snapshot.data[k]),
-                          SizedBox(
-                            height: 100,
-                          )
-                        ],
-                      );
-                    } else {
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                  }),
-            )
-          ],
-        ),
-      ),
+      body: FutureBuilder(
+          future: getReferralModel(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Container(
+                width: MediaQuery.of(context).size.width,
+                child: ListView(
+                  children: <Widget>[
+                    ReferralItem(
+                      referralModel: referralModel,
+                      commentPage: true,
+                    ),
+                    Divider(
+                      color: Colors.grey,
+                    ),
+                    SizedBox(
+                      height: 30,
+                    ),
+                    Container(
+                      height: 300,
+                      margin: EdgeInsets.symmetric(horizontal: 8),
+                      child: FutureBuilder<Map<String, CommentModel>>(
+                          future: _feedProvider.getComments(referralModel
+                              .getModel[ReferralConstants.REFERRAL_ID]),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              if (snapshot.data.keys.length == 0) {
+                                return Container(
+                                  color: Colors.white60,
+                                  child: Column(
+                                    children: <Widget>[
+                                      Text(
+                                        "No comments",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline5
+                                            .merge(GoogleFonts.lato(
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
+                                        child: Text(
+                                          "There is no exercise better for the heart than reaching down and lifting people up",
+                                          textAlign: TextAlign.center,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .merge(GoogleFonts.lato(
+                                                  fontWeight: FontWeight.w500)),
+                                        ),
+                                      ),
+                                      FittedBox(
+                                        child: SizedBox(
+                                          height: 200,
+                                          width: 200,
+                                          child: Image.asset(
+                                              "assets/images/empty_feed3.png"),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              return ListView(
+                                physics: ClampingScrollPhysics(),
+                                shrinkWrap: true,
+                                children: [
+                                  for (var k in snapshot.data.keys)
+                                    buildCommentItem(snapshot.data[k]),
+                                  SizedBox(
+                                    height: 100,
+                                  )
+                                ],
+                              );
+                            } else {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                          }),
+                    )
+                  ],
+                ),
+              );
+            } else
+              return CircularProgressIndicator();
+          }),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Container(
         width: MediaQuery.of(context).size.width,
@@ -227,7 +299,9 @@ class _CommentsState extends State<Comments> {
                       ProfileConstants.PROFILE_PIC_URL:
                           _profile.getModel[ProfileConstants.PROFILE_PIC_URL],
                       ProfileConstants.HEADLINE:
-                          _profile.getModel[ProfileConstants.HEADLINE]
+                          _profile.getModel[ProfileConstants.HEADLINE],
+                      ProfileConstants.PUSH_TOKEN:
+                          _profile.getModel[ProfileConstants.PUSH_TOKEN],
                     },
                     CommentsConstant.COMMENT: comment,
                     CommentsConstant.NUM_REPLIES: 0,

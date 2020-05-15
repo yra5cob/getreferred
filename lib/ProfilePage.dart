@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/profileCreationPage.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/profileCreationPage.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
 import 'package:provider/provider.dart';
 
@@ -649,7 +650,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final _profile = Provider.of<ProfileModel>(context);
+    final _profile = Provider.of<ProfileProvider>(context).getProfile();
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,

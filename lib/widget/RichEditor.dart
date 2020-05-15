@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:getreferred/widget/CustomButton.dart';
+import 'package:ReferAll/widget/CustomButton.dart';
 import 'package:quill_delta/quill_delta.dart';
 import 'package:zefyr/zefyr.dart';
 

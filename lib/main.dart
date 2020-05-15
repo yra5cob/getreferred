@@ -1,29 +1,39 @@
+import 'package:ReferAll/BLoc/DynamicLinkProvider.dart';
+import 'package:ReferAll/Comments.dart';
 import 'package:flutter/material.dart';
-import 'package:getreferred/BLoc/CommentsBloc.dart';
-import 'package:getreferred/BLoc/CommentsProvider.dart';
-import 'package:getreferred/BLoc/FeedProvider.dart';
-import 'package:getreferred/BLoc/MyReferralFeedProvider.dart';
-import 'package:getreferred/LoadingScreen.dart';
-import 'package:getreferred/helper/Util.dart';
-import 'package:getreferred/model/ProfileModel.dart';
+import 'package:ReferAll/BLoc/FeedProvider.dart';
+import 'package:ReferAll/BLoc/MyReferralFeedProvider.dart';
+import 'package:ReferAll/BLoc/NotificationProvider.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/LoadingScreen.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:get/get.dart';
 import 'LoginPage.dart';
 import 'package:provider/provider.dart';
+import 'globals.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
-
+  Globals globals = new Globals();
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (context) => ProfileModel()),
           ChangeNotifierProvider(create: (context) => FeedProvider()),
           ChangeNotifierProvider(create: (context) => MyReferralFeedProvider()),
+          ChangeNotifierProvider(create: (context) => NotificationProvider()),
+          ChangeNotifierProvider(create: (context) => ProfileProvider()),
+          ChangeNotifierProvider(create: (context) => DynamicLinkProvider()),
         ],
-        child: MaterialApp(
+        child: GetMaterialApp(
+          navigatorKey: globals.navigatorKey,
           debugShowCheckedModeBanner: false,
+          routes: {
+            '/comments': (context) => Comments(),
+          },
           title: 'ReferAll',
           theme: ThemeData(
             // This is the theme of your application.

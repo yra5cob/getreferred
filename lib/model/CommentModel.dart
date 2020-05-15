@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:getreferred/constants/CommentsConstant.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/constants/ReferralConstants.dart';
+import 'package:ReferAll/constants/CommentsConstant.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/constants/ReferralConstants.dart';
 
 class CommentModel extends ChangeNotifier {
   Map<String, dynamic> model = {

@@ -1,4 +1,4 @@
-# getreferred
+# ReferAll
 
 A new Flutter project.
 

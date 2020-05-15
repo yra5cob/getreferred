@@ -2,10 +2,12 @@ class ProfileConstants {
   static final String NAME = "name";
   static final String USERNAME = "uid";
   static final String EMAIL = "email";
+  static final String PUSH_TOKEN = "token";
   static final String PROFILE_PIC_URL = "profilePicUrl";
   static final String ACADEMICS = "academics";
   static final String CAREER = "career";
   static final String LANGUAGE = "language";
+  static final String COVER_URL = "coverURL";
   static final String ADDITIONAL_INFO = "additionalInfo";
   static final String FIRST_NAME = "firstName";
   static final String LAST_NAME = "lastName";

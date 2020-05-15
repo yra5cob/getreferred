@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
 
 import 'helper/Util.dart';
 

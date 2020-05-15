@@ -1,18 +1,23 @@
+import 'package:ReferAll/GroupSelectionScreen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:getreferred/Home.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/Util.dart';
-import 'package:getreferred/model/ProfileModel.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:flutter_cupertino_date_picker/flutter_cupertino_date_picker.dart';
+import 'package:ReferAll/Home.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/Util.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
 import 'package:progress_hud/progress_hud.dart';
-import 'package:getreferred/widget/CustomButton.dart';
-import 'package:getreferred/widget/CustomDropDown.dart';
-import 'package:getreferred/widget/CustomPhoneWidget.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
-import 'package:getreferred/widget/CustomTouchSearch.dart';
+import 'package:ReferAll/widget/CustomButton.dart';
+import 'package:ReferAll/widget/CustomDropDown.dart';
+import 'package:ReferAll/widget/CustomPhoneWidget.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
+import 'package:ReferAll/widget/CustomTouchSearch.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_icons/line_awesome_icons.dart';
@@ -29,7 +34,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
-final globalKey = GlobalKey<ScaffoldState>();
+final profileCreationglobalKey = GlobalKey<ScaffoldState>();
 final GlobalKey<AnimatedListState> _educational_listKey = GlobalKey();
 final GlobalKey<AnimatedListState> _professional_listKey = GlobalKey();
 GlobalKey<AutoCompleteTextFieldState<String>> _current_location_key =
@@ -45,7 +50,8 @@ class ProfileCreationPage extends StatefulWidget {
 
 class _ProfileCreationPageState extends State<ProfileCreationPage> {
   ProgressHUD _progressHUD;
-
+  ProfileProvider _profileProvider;
+  ProfileModel _profile;
   bool _loading = false;
   final bool isedit;
   Gender genderState;
@@ -106,16 +112,49 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
 
   _ProfileCreationPageState(this.isedit);
 
-  Future<Null> _selectDate(
-      BuildContext context, DateTime getDate, Function setDate) async {
-    final DateTime picked = await showDatePicker(
-        context: context,
-        initialDate: getDate == null ? DateTime.now() : getDate,
-        firstDate: DateTime(1970, 1),
-        lastDate: DateTime(2101));
-    if (picked != null && picked != getDate) {
-      setDate(picked);
-    }
+  // Future<Null> _selectDate(
+  //     BuildContext context, DateTime getDate, Function setDate) async {
+  //   final DateTime picked = await showDatePicker(
+  //       context: context,
+  //       initialDate: getDate == null ? DateTime.now() : getDate,
+  //       firstDate: DateTime(1970, 1),
+  //       lastDate: DateTime(2101));
+  //   if (picked != null && picked != getDate) {
+  //     setDate(picked);
+  //   }
+  // }
+
+  void _showDatePicker(String _title, DateTime getDate, Function setDate) {
+    DatePicker.showDatePicker(
+      context,
+      onMonthChangeStartWithFirstDate: true,
+      pickerTheme: DateTimePickerTheme(
+        showTitle: true,
+        backgroundColor: Colors.white,
+        itemTextStyle: GoogleFonts.lato(color: Colors.black),
+        titleHeight: 50,
+        pickerHeight: 300.0,
+        confirm: Text('Done',
+            style: GoogleFonts.lato(color: Colors.cyan, fontSize: 20)),
+        cancel: Text('Cancel',
+            style: GoogleFonts.lato(color: Colors.red, fontSize: 20)),
+      ),
+      minDateTime: DateTime(1970, 1),
+      maxDateTime: DateTime(2101),
+      initialDateTime: getDate == null ? DateTime.now() : getDate,
+      dateFormat: 'yyyy-MMMM-dd',
+      locale: DateTimePickerLocale.en_us,
+      onClose: () => print("----- onClose -----"),
+      onCancel: () => print('onCancel'),
+      onChange: (dateTime, List<int> index) {
+        setState(() {});
+      },
+      onConfirm: (dateTime, List<int> index) {
+        if (dateTime != null && dateTime != getDate) {
+          setDate(dateTime);
+        }
+      },
+    );
   }
 
   @override
@@ -129,7 +168,8 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
       loading: false,
       text: "Saving...",
     );
-    final _profile = Provider.of<ProfileModel>(context, listen: false);
+    _profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    _profile = _profileProvider.getProfile();
     _profile.getModel[ProfileConstants.CAREER].forEach((c) {
       Map _company = {};
       _company[ProfileConstants.COMPANY_NAME] =
@@ -179,7 +219,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
         Gender.values, _profile.model[ProfileConstants.GENDER]);
     countryCode = _profile.model[ProfileConstants.COUNTRY_CODE] == null ||
             _profile.model[ProfileConstants.COUNTRY_CODE] == ''
-        ? null
+        ? Country.IN
         : Country.findByIsoCode(_profile.model[ProfileConstants.COUNTRY_CODE]);
     resume = _profile.model[ProfileConstants.RESUME];
     resumeURL = _profile.model[ProfileConstants.RESUME_URL];
@@ -261,8 +301,29 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
       if (image != null)
         _cropImage(image).then((img) {
           if (img != null) {
-            uploadPic(context, img);
-            print('Image Path $img');
+            _profileProvider.uploadPic(_profile, img).then((onValue) {
+              _profileProvider.saveProfile().then((onValue) {
+                setState(() {
+                  imageUrl =
+                      _profile.getModel[ProfileConstants.PROFILE_PIC_URL];
+                });
+              });
+            });
+          }
+        });
+    });
+  }
+
+  Future updateCover() async {
+    ImagePicker.pickImage(source: ImageSource.gallery).then((image) {
+      if (image != null)
+        _cropImage(image).then((img) {
+          if (img != null) {
+            _profileProvider.uploadCover(_profile, img).then((onValue) {
+              _profileProvider.saveProfile().then((onValue) {
+                setState(() {});
+              });
+            });
           }
         });
     });
@@ -317,308 +378,251 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
     }
   }
 
-  Future uploadPic(BuildContext context, File img) async {
-    StorageReference storageReference = FirebaseStorage.instance.ref().child(
-        "profilePictures/" +
-            Provider.of<ProfileModel>(context, listen: false)
-                .model[ProfileConstants.USERNAME]);
-    final StorageUploadTask uploadTask = storageReference.putFile(img);
-    final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
-    final String url = (await downloadUrl.ref.getDownloadURL());
-    Provider.of<ProfileModel>(context, listen: false)
-        .setValue(ProfileConstants.PROFILE_PIC_URL, url);
-    setState(() {
-      imageUrl = url;
-    });
-    print("URL is $url");
-  }
-
   String getSafeValue(item) {
     return item == null ? '' : item;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        key: globalKey,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: UIUtil.getMasked(Icons.arrow_back_ios),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          centerTitle: true,
-          elevation: 0,
-          title: Text(
-            "Create your profile",
-            style: TextStyle(foreground: UIUtil.getTextGradient()),
-          ),
-          backgroundColor: Colors.white,
-          actions: <Widget>[
-            IconButton(
-                icon: UIUtil.getMasked(Icons.help),
-                color: Colors.black,
-                onPressed: () {}),
-          ],
-        ),
-        bottomNavigationBar: BottomAppBar(
-          elevation: 4,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              isedit
-                  ? Container(
-                      height: 3,
-                    )
-                  : Material(
-                      child: InkWell(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 20),
-                        child: Row(
-                          children: <Widget>[
-                            Text(
-                              "Skip ",
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.cyan),
+    return Stack(
+      children: <Widget>[
+        Scaffold(
+            key: profileCreationglobalKey,
+            appBar: AppBar(
+              leading: IconButton(
+                icon: UIUtil.getMasked(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              centerTitle: false,
+              elevation: 0,
+              title: Text(
+                "Create your profile",
+                style: Theme.of(context).textTheme.headline6.merge(
+                    GoogleFonts.lato(
+                        fontWeight: FontWeight.bold, color: Colors.black54)),
+              ),
+              backgroundColor: Colors.transparent,
+            ),
+            bottomNavigationBar: BottomAppBar(
+              elevation: 4,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  isedit
+                      ? Container(
+                          height: 3,
+                        )
+                      : Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {},
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 20),
+                              child: Row(
+                                children: <Widget>[
+                                  Text(
+                                    "Skip ",
+                                    style: GoogleFonts.lato(
+                                        fontSize: 20, color: Colors.cyan),
+                                  ),
+                                  UIUtil.getMasked(Icons.arrow_forward_ios)
+                                ],
+                              ),
                             ),
-                            UIUtil.getMasked(Icons.arrow_forward_ios)
-                          ],
-                        ),
-                      ),
-                    )),
-              CustomButton(
-                label: isedit ? "Save" : "Save and continue",
-                margin: EdgeInsets.all(20),
-                icon: Icons.arrow_forward_ios,
-                onTap: () {
-                  dismissProgressHUD();
-                  final _profile =
-                      Provider.of<ProfileModel>(context, listen: false);
-                  Map<String, dynamic> model = {
-                    ProfileConstants.NAME: {
-                      ProfileConstants.FIRST_NAME: _firstNameCtrl.text,
-                      ProfileConstants.LAST_NAME: _lastNameCtrl.text,
-                    },
-                    ProfileConstants.PROFILE_PIC_URL: imageUrl,
-                    ProfileConstants.COUNTRY_CODE:
-                        countryCode == null ? null : countryCode.isoCode,
-                    ProfileConstants.PHONE: _phoneNumberController.text,
-                    ProfileConstants.DOB: _dob_ctrl.text,
-                    ProfileConstants.GENDER:
-                        getSafeValue(EnumToString.parseCamelCase(genderState)),
-                    ProfileConstants.CURRENT_LOCATION:
-                        _searchCurrentLocation.text,
-                    ProfileConstants.PREFERRED_LOCATION:
-                        _searchpreferredLocation.text,
-                    ProfileConstants.INDUSTRY: _searchindustry.text,
-                    ProfileConstants.FUNCTIONAL_AREA:
-                        _searchfunctionalarea.text,
-                    ProfileConstants.HEADLINE: _headlineController.text,
-                    ProfileConstants.ACADEMICS: colleges,
-                    ProfileConstants.CAREER: companies,
-                    ProfileConstants.LANGUAGE: languages,
-                    ProfileConstants.ADDITIONAL_INFO: {
-                      ProfileConstants.HANDLED_TEAM: getSafeValue(
-                          EnumToString.parseCamelCase(handledTeamState)),
-                      ProfileConstants.SIX_DAYS_WEEK: getSafeValue(
-                          EnumToString.parseCamelCase(sixDaysState)),
-                      ProfileConstants.RELOCATE: getSafeValue(
-                          EnumToString.parseCamelCase(relocateState)),
-                      ProfileConstants.EARLY_STAGE_STARTUP: getSafeValue(
-                          EnumToString.parseCamelCase(earlyStartupState)),
-                      ProfileConstants.TRAVEL_WILLINGNESS: getSafeValue(
-                          EnumToString.parseCamelCase(willingnessTravelState)),
-                      ProfileConstants.USA_PREMIT: usaPermitState == null
-                          ? ''
-                          : EnumToString.parseCamelCase(usaPermitState),
-                    },
-                  };
+                          )),
+                  CustomButton(
+                    label: isedit ? "Save" : "Save and continue",
+                    margin: EdgeInsets.all(20),
+                    icon: Icons.arrow_forward_ios,
+                    onTap: () {
+                      dismissProgressHUD();
+                      Map<String, dynamic> model = {
+                        ProfileConstants.NAME: {
+                          ProfileConstants.FIRST_NAME: _firstNameCtrl.text,
+                          ProfileConstants.LAST_NAME: _lastNameCtrl.text,
+                        },
+                        ProfileConstants.PROFILE_PIC_URL: imageUrl,
+                        ProfileConstants.COUNTRY_CODE:
+                            countryCode == null ? null : countryCode.isoCode,
+                        ProfileConstants.PHONE: _phoneNumberController.text,
+                        ProfileConstants.DOB: _dob_ctrl.text,
+                        ProfileConstants.GENDER: getSafeValue(
+                            EnumToString.parseCamelCase(genderState)),
+                        ProfileConstants.CURRENT_LOCATION:
+                            _searchCurrentLocation.text,
+                        ProfileConstants.PREFERRED_LOCATION:
+                            _searchpreferredLocation.text,
+                        ProfileConstants.INDUSTRY: _searchindustry.text,
+                        ProfileConstants.FUNCTIONAL_AREA:
+                            _searchfunctionalarea.text,
+                        ProfileConstants.HEADLINE: _headlineController.text,
+                        ProfileConstants.ACADEMICS: colleges,
+                        ProfileConstants.CAREER: companies,
+                        ProfileConstants.LANGUAGE: languages,
+                        ProfileConstants.ADDITIONAL_INFO: {
+                          ProfileConstants.HANDLED_TEAM: getSafeValue(
+                              EnumToString.parseCamelCase(handledTeamState)),
+                          ProfileConstants.SIX_DAYS_WEEK: getSafeValue(
+                              EnumToString.parseCamelCase(sixDaysState)),
+                          ProfileConstants.RELOCATE: getSafeValue(
+                              EnumToString.parseCamelCase(relocateState)),
+                          ProfileConstants.EARLY_STAGE_STARTUP: getSafeValue(
+                              EnumToString.parseCamelCase(earlyStartupState)),
+                          ProfileConstants.TRAVEL_WILLINGNESS: getSafeValue(
+                              EnumToString.parseCamelCase(
+                                  willingnessTravelState)),
+                          ProfileConstants.USA_PREMIT: usaPermitState == null
+                              ? ''
+                              : EnumToString.parseCamelCase(usaPermitState),
+                        },
+                      };
 
-                  Firestore.instance
-                      .collection('users')
-                      .document(_profile.model[ProfileConstants.USERNAME])
-                      .setData(model, merge: true)
-                      .then((onValue) {
-                    _profile.setAll(model);
-                    dismissProgressHUD();
-                    isedit
-                        ? Navigator.pop(context)
-                        : Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Home(),
-                            ),
-                            ModalRoute.withName("/Home"));
-                  });
-                },
-              )
-            ],
-          ),
-        ),
-        body: Stack(
-          children: <Widget>[
-            Container(
-                padding: EdgeInsets.only(left: 20, right: 20),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: <Widget>[
-                    ListView(
-                      physics: ClampingScrollPhysics(),
+                      _profile.setAll(model);
+                      _profileProvider.saveProfile().then((value) {
+                        dismissProgressHUD();
+                        isedit
+                            ? Navigator.pop(context)
+                            : Get.to(GroupSelectionScreen());
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
+            body: Stack(
+              children: <Widget>[
+                Container(
+                    padding: EdgeInsets.only(left: 20, right: 20),
+                    child: ListView(
                       shrinkWrap: true,
                       children: <Widget>[
-                        SizedBox(height: 20),
-                        Text("Personal",
-                            style: Theme.of(context).textTheme.headline.merge(
-                                  TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      foreground: UIUtil.getTextGradient()),
-                                )),
-                        _personalForm(),
-                        Divider(
-                          color: Colors.cyan,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        ListView(
+                          physics: ClampingScrollPhysics(),
+                          shrinkWrap: true,
                           children: <Widget>[
-                            Text("Education",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline
-                                    .merge(
-                                      TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          foreground: UIUtil.getTextGradient()),
-                                    )),
-                            RawMaterialButton(
-                              onPressed: () {
-                                _addCollegemodalBottomSheetMenu();
-                              },
-                              child: new Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 18.0,
-                              ),
-                              shape: new CircleBorder(),
-                              elevation: 2.0,
-                              fillColor: Util.getColor2(),
-                              padding: const EdgeInsets.all(0.0),
+                            SizedBox(height: 20),
+                            Text("Profile Photo",
+                                style: UIUtil.getTitleStyle(context)),
+                            _personalForm(),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Text(
+                                  "Education",
+                                  style: UIUtil.getTitleStyle(context),
+                                ),
+                                RawMaterialButton(
+                                  onPressed: () {
+                                    _addCollegemodalBottomSheetMenu();
+                                  },
+                                  child: new Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 18.0,
+                                  ),
+                                  shape: new CircleBorder(),
+                                  elevation: 2.0,
+                                  fillColor: Util.getColor2(),
+                                  padding: const EdgeInsets.all(0.0),
+                                ),
+                              ],
+                            ),
+                            _educational(),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Text(
+                                  "Career",
+                                  style: UIUtil.getTitleStyle(context),
+                                ),
+                                RawMaterialButton(
+                                  onPressed: () {
+                                    _addJobmodalBottomSheetMenu();
+                                  },
+                                  child: new Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 18.0,
+                                  ),
+                                  shape: new CircleBorder(),
+                                  elevation: 2.0,
+                                  fillColor: Util.getColor2(),
+                                  padding: const EdgeInsets.all(0.0),
+                                ),
+                              ],
+                            ),
+                            _profession(),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Text(
+                                  "Language",
+                                  style: UIUtil.getTitleStyle(context),
+                                ),
+                                RawMaterialButton(
+                                  onPressed: () {
+                                    _addLanguagemodalBottomSheetMenu();
+                                  },
+                                  child: new Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 18.0,
+                                  ),
+                                  shape: new CircleBorder(),
+                                  elevation: 2.0,
+                                  fillColor: Util.getColor2(),
+                                  padding: const EdgeInsets.all(0.0),
+                                ),
+                              ],
+                            ),
+                            _languageWidget(context),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              children: <Widget>[
+                                Text(
+                                  "Additional information",
+                                  style: UIUtil.getTitleStyle(context),
+                                ),
+                              ],
+                            ),
+                            _additionalInfo(context),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Text(
+                                  "Resume",
+                                  style: UIUtil.getTitleStyle(context),
+                                ),
+                              ],
+                            ),
+                            _resume(context),
+                            SizedBox(
+                              height: 40,
                             ),
                           ],
-                        ),
-                        _educational(),
-                        Divider(
-                          color: Colors.cyan,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text("Career",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline
-                                    .merge(
-                                      TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          foreground: UIUtil.getTextGradient()),
-                                    )),
-                            RawMaterialButton(
-                              onPressed: () {
-                                _addJobmodalBottomSheetMenu();
-                              },
-                              child: new Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 18.0,
-                              ),
-                              shape: new CircleBorder(),
-                              elevation: 2.0,
-                              fillColor: Util.getColor2(),
-                              padding: const EdgeInsets.all(0.0),
-                            ),
-                          ],
-                        ),
-                        _profession(),
-                        Divider(
-                          color: Colors.cyan,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text("Language",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline
-                                    .merge(
-                                      TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          foreground: UIUtil.getTextGradient()),
-                                    )),
-                            RawMaterialButton(
-                              onPressed: () {
-                                _addLanguagemodalBottomSheetMenu();
-                              },
-                              child: new Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 18.0,
-                              ),
-                              shape: new CircleBorder(),
-                              elevation: 2.0,
-                              fillColor: Util.getColor2(),
-                              padding: const EdgeInsets.all(0.0),
-                            ),
-                          ],
-                        ),
-                        _languageWidget(context),
-                        Divider(
-                          color: Colors.cyan,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            Text("Additional information",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline
-                                    .merge(
-                                      TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          foreground: UIUtil.getTextGradient()),
-                                    )),
-                          ],
-                        ),
-                        _additionalInfo(context),
-                        Divider(
-                          color: Colors.cyan,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text("Resume",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline
-                                    .merge(
-                                      TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          foreground: UIUtil.getTextGradient()),
-                                    )),
-                          ],
-                        ),
-                        _resume(context),
-                        SizedBox(
-                          height: 40,
-                        ),
-                        Divider(
-                          color: Colors.cyan,
-                        ),
+                        )
                       ],
-                    )
-                  ],
-                )),
-            _progressHUD,
-          ],
-        ));
+                    )),
+              ],
+            )),
+        _progressHUD,
+      ],
+    );
   }
 
   Widget _resume(BuildContext context) {
@@ -632,24 +636,20 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                   child: Center(
                       child: Text(
                     "No resume attached!",
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: GoogleFonts.lato(color: Colors.grey, fontSize: 16),
                   )),
                 )
               : Container(
                   child: Material(
                     child: InkWell(
                       onTap: () {},
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 10),
-                          child: Text(
-                            resume,
-                            style: TextStyle(
-                                color: Colors.cyan,
-                                fontStyle: FontStyle.italic,
-                                fontSize: 16),
-                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 10),
+                        child: Text(
+                          resume,
+                          style: GoogleFonts.lato(
+                              color: Colors.cyan, fontSize: 16),
                         ),
                       ),
                     ),
@@ -670,8 +670,21 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                       FilePicker.getFile(
                         type: FileType.custom,
                         allowedExtensions: ['pdf', 'doc'],
-                      ).then((onValue) {
-                        uploadFile(context, onValue);
+                      ).then((file) {
+                        _profileProvider
+                            .uploadResume(_profile, file)
+                            .then((onValue) {
+                          Util.getFileNameWithExtension(file).then((fileName) {
+                            setState(() {
+                              resume = fileName;
+                              resumeURL = _profile
+                                  .getModel[ProfileConstants.RESUME_URL];
+                            });
+                            _profile.getModel[ProfileConstants.RESUME] =
+                                fileName;
+                            _profileProvider.saveProfile();
+                          });
+                        });
                       });
                     },
                     child: Padding(
@@ -679,7 +692,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                           vertical: 10, horizontal: 20),
                       child: Text(
                         resume == '' ? "Upload Resume" : "Update Resume",
-                        style: TextStyle(color: Colors.white),
+                        style: GoogleFonts.lato(color: Colors.white),
                       ),
                     ),
                   ),
@@ -692,39 +705,18 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
     );
   }
 
-  Future uploadFile(BuildContext context, File file) async {
-    dismissProgressHUD();
-    final _profile = Provider.of<ProfileModel>(context, listen: false);
-    StorageReference storageReference = FirebaseStorage.instance
-        .ref()
-        .child("resume/" + _profile.getModel[ProfileConstants.USERNAME]);
-    final StorageUploadTask uploadTask = storageReference.putFile(file);
-    final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
-    final String url = (await downloadUrl.ref.getDownloadURL());
-    var data = {
-      ProfileConstants.RESUME: _profile.getModel[ProfileConstants.NAME]
-              [ProfileConstants.FIRST_NAME] +
-          "_resume",
-      ProfileConstants.RESUME_URL: url
-    };
-    var docref = Firestore.instance
-        .collection('users')
-        .document(_profile.model[ProfileConstants.USERNAME]);
-    await docref.setData(data, merge: true).then((onValue) {});
-    _profile.setAll(data);
-    print("URL is $url");
-    dismissProgressHUD();
-  }
-
   Widget _personalForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        SizedBox(
+          height: 20,
+        ),
         Row(
           children: <Widget>[
             Expanded(
               child: Divider(
-                color: Colors.cyan,
+                color: Colors.white,
               ),
             ),
             Stack(
@@ -755,22 +747,96 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                       },
                       child: new Icon(
                         Icons.edit,
-                        color: Colors.black,
+                        color: Colors.white,
                         size: 18.0,
                       ),
                       shape: new CircleBorder(),
                       elevation: 2.0,
-                      fillColor: Colors.white,
+                      fillColor: Colors.black38,
                       padding: const EdgeInsets.all(0.0),
                     ))
               ],
             ),
             Expanded(
                 child: Divider(
-              color: Colors.cyan,
+              color: Colors.white,
             ))
           ],
         ),
+        SizedBox(
+          height: 20,
+        ),
+        Text("Cover Photo", style: UIUtil.getTitleStyle(context)),
+        SizedBox(
+          height: 10,
+        ),
+        (_profile.getModel[ProfileConstants.COVER_URL] == '' ||
+                _profile.getModel[ProfileConstants.COVER_URL] == null)
+            ? InkWell(
+                onTap: () {
+                  updateCover();
+                },
+                child: Container(
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      color: Colors.blueGrey[50],
+                      borderRadius: BorderRadius.circular(15)),
+                  child: Center(
+                    child: Stack(
+                      children: <Widget>[
+                        Icon(
+                          Icons.add_a_photo,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            : Stack(
+                children: <Widget>[
+                  Container(
+                      margin: EdgeInsets.symmetric(vertical: 10),
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          color: Colors.blueGrey[50],
+                          borderRadius: BorderRadius.circular(15)),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15.0),
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              _profile.getModel[ProfileConstants.COVER_URL],
+                          placeholder: (context, url) =>
+                              Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) =>
+                              Icon(Icons.error),
+                          fit: BoxFit.cover,
+                        ),
+                      )),
+                  Positioned(
+                      bottom: 15,
+                      right: -10,
+                      child: RawMaterialButton(
+                        onPressed: () {
+                          updateCover();
+                        },
+                        child: new Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 18.0,
+                        ),
+                        shape: new CircleBorder(),
+                        elevation: 2.0,
+                        fillColor: Colors.black38,
+                        padding: const EdgeInsets.all(0.0),
+                      ))
+                ],
+              ),
+        Text("Personal Details", style: UIUtil.getTitleStyle(context)),
         SizedBox(
           height: 20,
         ),
@@ -778,29 +844,38 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "First Name",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTextField(
           hint: "First name",
           controller: _firstNameCtrl,
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Last Name",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTextField(
           hint: "Last name",
           controller: _lastNameCtrl,
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Phone",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomPhoneWidget(
@@ -813,18 +888,22 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             });
           },
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Date of birth",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTextField(
           hint: "Date of birth",
           readonly: true,
           onTap: () {
-            _selectDate(context, dobState, (DateTime d) {
+            _showDatePicker("Date of Birth", dobState, (DateTime d) {
               setState(() {
                 dobState = d;
                 _dob_ctrl.text = d == null ? "" : formatter.format(d);
@@ -833,11 +912,15 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
           },
           controller: _dob_ctrl,
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Gender",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomDropDown(
@@ -851,11 +934,15 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
           },
           isEnum: true,
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Current Location",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTouchSearch(
@@ -869,11 +956,15 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             });
           },
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Preferred Location",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTouchSearch(
@@ -887,11 +978,15 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             });
           },
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Preferred Industry",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTouchSearch(
@@ -905,11 +1000,15 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             });
           },
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Preferred Functional Area",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTouchSearch(
@@ -923,11 +1022,15 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
             });
           },
         ),
+        SizedBox(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             "Profile Headline",
-            style: TextStyle(fontSize: 14, color: Util.getColor2()),
+            style: GoogleFonts.lato(
+                fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ),
         CustomTextField(
@@ -957,66 +1060,67 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
 
   Widget _language(int index) {
     return Container(
-      child: Card(
-        child: ListTile(
-          leading: UIUtil.getMasked(LineAwesomeIcons.language, size: 40),
-          title: Text(
-            languages[index][ProfileConstants.LANGUAGE_NAME],
-            style: TextStyle(
-                fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
-          ),
-          subtitle: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              if (languages[index][ProfileConstants.LANGUAGE_SPEAK])
-                Text("Speak ",
-                    style: TextStyle(
-                        fontSize: 14,
-                        height: 1.38,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500)),
-              if (languages[index][ProfileConstants.LANGUAGE_READ])
-                Text("Read ",
-                    style: TextStyle(
-                        fontSize: 14,
-                        height: 1.38,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500)),
-              if (languages[index][ProfileConstants.LANGUAGE_WRITE])
-                Text("Write ",
-                    style: TextStyle(
-                        fontSize: 14,
-                        height: 1.38,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500)),
-            ],
-          ),
-          trailing: PopupMenuButton<int>(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 1,
-                child: Text("Edit"),
-              ),
-              PopupMenuItem(
-                value: 2,
-                child: Text("Delete"),
-              ),
-            ],
-            onCanceled: () {
-              print("You have canceled the menu.");
-            },
-            onSelected: (value) {
-              if (value == 2) {
-                AnimatedListRemovedItemBuilder builder = (context, animation) {
-                  // A method to build the Card widget.
-                  return new Container();
-                };
-                _educational_listKey.currentState.removeItem(index, builder);
-                colleges.removeAt(index);
-              }
-            },
-            icon: Icon(Icons.more_vert),
-          ),
+      margin: EdgeInsets.only(top: 5),
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey[300]))),
+      child: ListTile(
+        leading: UIUtil.getMasked(LineAwesomeIcons.language, size: 40),
+        title: Text(
+          languages[index][ProfileConstants.LANGUAGE_NAME],
+          style: GoogleFonts.lato(
+              fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
+        ),
+        subtitle: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            if (languages[index][ProfileConstants.LANGUAGE_SPEAK])
+              Text("Speak ",
+                  style: GoogleFonts.lato(
+                      fontSize: 14,
+                      height: 1.38,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500)),
+            if (languages[index][ProfileConstants.LANGUAGE_READ])
+              Text("Read ",
+                  style: GoogleFonts.lato(
+                      fontSize: 14,
+                      height: 1.38,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500)),
+            if (languages[index][ProfileConstants.LANGUAGE_WRITE])
+              Text("Write ",
+                  style: GoogleFonts.lato(
+                      fontSize: 14,
+                      height: 1.38,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500)),
+          ],
+        ),
+        trailing: PopupMenuButton<int>(
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 1,
+              child: Text("Edit"),
+            ),
+            PopupMenuItem(
+              value: 2,
+              child: Text("Delete"),
+            ),
+          ],
+          onCanceled: () {
+            print("You have canceled the menu.");
+          },
+          onSelected: (value) {
+            if (value == 2) {
+              setState(() {
+                languages.removeAt(index);
+              });
+            } else {
+              _addLanguagemodalBottomSheetMenu(
+                  edit: true, language: languages[index], index: index);
+            }
+          },
+          icon: Icon(Icons.more_vert),
         ),
       ),
     );
@@ -1049,7 +1153,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .title
-                                      .merge(TextStyle(
+                                      .merge(GoogleFonts.lato(
                                           fontWeight: FontWeight.bold)),
                                 ),
                               ],
@@ -1119,67 +1223,71 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
 
   Widget _college(int index) {
     return Container(
-      child: Card(
-        child: ListTile(
-          leading: UIUtil.getMasked(LineAwesomeIcons.graduation_cap, size: 40),
-          title: Text(
-            colleges[index][ProfileConstants.COLLEGE_NAME],
-            style: TextStyle(
-                fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                colleges[index][ProfileConstants.COLLEGE_DEGREE] +
-                    " " +
-                    colleges[index][ProfileConstants.COLLEGE_FIELD_OF_STUDY] +
-                    " [" +
-                    colleges[index][ProfileConstants.COLLEGE_COURSE_TYPE] +
-                    "]",
-                style: TextStyle(
+      margin: EdgeInsets.only(top: 5),
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey[300]))),
+      child: ListTile(
+        leading: UIUtil.getMasked(LineAwesomeIcons.graduation_cap, size: 40),
+        title: Text(
+          colleges[index][ProfileConstants.COLLEGE_NAME],
+          style: GoogleFonts.lato(
+              fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              colleges[index][ProfileConstants.COLLEGE_DEGREE] +
+                  " " +
+                  colleges[index][ProfileConstants.COLLEGE_FIELD_OF_STUDY] +
+                  " [" +
+                  colleges[index][ProfileConstants.COLLEGE_COURSE_TYPE] +
+                  "]",
+              style: GoogleFonts.lato(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  height: 1.38,
+                  fontWeight: FontWeight.w500),
+            ),
+            Text(
+                colleges[index][ProfileConstants.COLLEGE_FROM] +
+                    " - " +
+                    colleges[index][ProfileConstants.COLLEGE_TO],
+                style: GoogleFonts.lato(
                     fontSize: 14,
-                    color: Colors.grey,
                     height: 1.38,
-                    fontWeight: FontWeight.w500),
-              ),
-              Text(
-                  colleges[index][ProfileConstants.COLLEGE_FROM] +
-                      " - " +
-                      colleges[index][ProfileConstants.COLLEGE_TO],
-                  style: TextStyle(
-                      fontSize: 14,
-                      height: 1.38,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500))
-            ],
-          ),
-          trailing: PopupMenuButton<int>(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 1,
-                child: Text("Edit"),
-              ),
-              PopupMenuItem(
-                value: 2,
-                child: Text("Delete"),
-              ),
-            ],
-            onCanceled: () {
-              print("You have canceled the menu.");
-            },
-            onSelected: (value) {
-              if (value == 2) {
-                AnimatedListRemovedItemBuilder builder = (context, animation) {
-                  // A method to build the Card widget.
-                  return new Container();
-                };
-                _educational_listKey.currentState.removeItem(index, builder);
-                colleges.removeAt(index);
-              }
-            },
-            icon: Icon(Icons.more_vert),
-          ),
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500))
+          ],
+        ),
+        trailing: PopupMenuButton<int>(
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 1,
+              child: Text("Edit"),
+            ),
+            PopupMenuItem(
+              value: 2,
+              child: Text("Delete"),
+            ),
+          ],
+          onCanceled: () {
+            print("You have canceled the menu.");
+          },
+          onSelected: (value) {
+            if (value == 2) {
+              AnimatedListRemovedItemBuilder builder = (context, animation) {
+                // A method to build the Card widget.
+                return new Container();
+              };
+              _educational_listKey.currentState.removeItem(index, builder);
+              colleges.removeAt(index);
+            } else {
+              _addCollegemodalBottomSheetMenu(
+                  edit: true, college: colleges[index], index: index);
+            }
+          },
+          icon: Icon(Icons.more_vert),
         ),
       ),
     );
@@ -1187,84 +1295,88 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
 
   Widget _company(int index) {
     return Container(
-      child: Card(
-        child: ListTile(
-          leading: UIUtil.getMasked(LineAwesomeIcons.briefcase, size: 40),
-          title: Text(
-            companies[index][ProfileConstants.COMPANY_NAME],
-            style: TextStyle(
-                fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                companies[index][ProfileConstants.COMPANY_POSITION] +
-                    " • `" +
-                    companies[index][ProfileConstants.COMPANY_EMPLOYE_TYPE],
-                style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    height: 1.38,
-                    fontWeight: FontWeight.w500),
-              ),
-              Row(
-                children: <Widget>[
-                  Text(
-                      companies[index][ProfileConstants.COMPANY_FROM] +
-                          " - " +
-                          companies[index][ProfileConstants.COMPANY_TO],
-                      style: TextStyle(
-                          fontSize: 14,
-                          height: 1.38,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500))
-                ],
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: <Widget>[
-                  UIUtil.getMasked(LineAwesomeIcons.map_marker, size: 14),
-                  Text(
-                      companies[index][ProfileConstants.COMPANY_LOCATION]
-                          .toString(),
-                      style: TextStyle(
-                          fontSize: 12,
-                          height: 1.38,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500))
-                ],
-              )
-            ],
-          ),
-          trailing: PopupMenuButton<int>(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 1,
-                child: Text("Edit"),
-              ),
-              PopupMenuItem(
-                value: 2,
-                child: Text("Delete"),
-              ),
-            ],
-            onCanceled: () {
-              print("You have canceled the menu.");
-            },
-            onSelected: (value) {
-              if (value == 2) {
-                AnimatedListRemovedItemBuilder builder = (context, animation) {
-                  // A method to build the Card widget.
-                  return new Container();
-                };
-                _educational_listKey.currentState.removeItem(index, builder);
-                colleges.removeAt(index);
-              }
-            },
-            icon: Icon(Icons.more_vert),
-          ),
+      margin: EdgeInsets.only(top: 5),
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey[300]))),
+      child: ListTile(
+        leading: UIUtil.getMasked(LineAwesomeIcons.briefcase, size: 40),
+        title: Text(
+          companies[index][ProfileConstants.COMPANY_NAME],
+          style: GoogleFonts.lato(
+              fontSize: 16, height: 1.38, fontWeight: FontWeight.w500),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              companies[index][ProfileConstants.COMPANY_POSITION] +
+                  " • `" +
+                  companies[index][ProfileConstants.COMPANY_EMPLOYE_TYPE],
+              style: GoogleFonts.lato(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  height: 1.38,
+                  fontWeight: FontWeight.w500),
+            ),
+            Row(
+              children: <Widget>[
+                Text(
+                    companies[index][ProfileConstants.COMPANY_FROM] +
+                        " - " +
+                        companies[index][ProfileConstants.COMPANY_TO],
+                    style: GoogleFonts.lato(
+                        fontSize: 14,
+                        height: 1.38,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500))
+              ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Row(
+              children: <Widget>[
+                UIUtil.getMasked(LineAwesomeIcons.map_marker, size: 14),
+                Text(
+                    companies[index][ProfileConstants.COMPANY_LOCATION]
+                        .toString(),
+                    style: GoogleFonts.lato(
+                        fontSize: 12,
+                        height: 1.38,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500))
+              ],
+            )
+          ],
+        ),
+        trailing: PopupMenuButton<int>(
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 1,
+              child: Text("Edit"),
+            ),
+            PopupMenuItem(
+              value: 2,
+              child: Text("Delete"),
+            ),
+          ],
+          onCanceled: () {
+            print("You have canceled the menu.");
+          },
+          onSelected: (value) {
+            if (value == 2) {
+              AnimatedListRemovedItemBuilder builder = (context, animation) {
+                // A method to build the Card widget.
+                return new Container();
+              };
+              _educational_listKey.currentState.removeItem(index, builder);
+              colleges.removeAt(index);
+            } else {
+              _addJobmodalBottomSheetMenu(
+                  edit: true, company: companies[index], index: index);
+            }
+          },
+          icon: Icon(Icons.more_vert),
         ),
       ),
     );
@@ -1275,203 +1387,198 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
         physics: NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         children: <Widget>[
-          Card(
-              child: Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text("Have you handled a team?"),
-                        Row(children: [
-                          Text("Yes"),
-                          RadioGroup(
-                            value: Yes_No_type.Yes,
-                            groupValue: handledTeamState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                handledTeamState = value;
-                              });
-                            },
-                          ),
-                          Text("No"),
-                          RadioGroup(
-                            value: Yes_No_type.No,
-                            groupValue: handledTeamState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                handledTeamState = value;
-                              });
-                            },
-                          )
-                        ])
-                      ]))),
-          Card(
-              child: Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text("Are you willing to work 6 days a week?"),
-                        Row(children: [
-                          Text("Yes"),
-                          RadioGroup(
-                            value: Yes_No_type.Yes,
-                            groupValue: sixDaysState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                sixDaysState = value;
-                              });
-                            },
-                          ),
-                          Text("No"),
-                          RadioGroup(
-                            value: Yes_No_type.No,
-                            groupValue: sixDaysState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                sixDaysState = value;
-                              });
-                            },
-                          )
-                        ])
-                      ]))),
-          Card(
-              child: Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text("Are you willing to relocate?"),
-                        Row(children: [
-                          Text("Yes"),
-                          RadioGroup(
-                            value: Yes_No_type.Yes,
-                            groupValue: relocateState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                relocateState = value;
-                              });
-                            },
-                          ),
-                          Text("No"),
-                          RadioGroup(
-                            value: Yes_No_type.No,
-                            groupValue: relocateState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                relocateState = value;
-                              });
-                            },
-                          )
-                        ])
-                      ]))),
-          Card(
-              child: Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                            "Are you open to joining an early stage start-up?"),
-                        Row(children: [
-                          Text("Yes"),
-                          RadioGroup(
-                            value: Yes_No_type.Yes,
-                            groupValue: earlyStartupState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                earlyStartupState = value;
-                              });
-                            },
-                          ),
-                          Text("No"),
-                          RadioGroup(
-                            value: Yes_No_type.No,
-                            groupValue: earlyStartupState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                earlyStartupState = value;
-                              });
-                            },
-                          )
-                        ])
-                      ]))),
-          Card(
-              child: Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text("Willingness to Travel?"),
-                        Row(children: [
-                          Text("No"),
-                          RadioGroup(
-                            value: Travel_type.No,
-                            groupValue: willingnessTravelState,
-                            onChange: (Travel_type value) {
-                              setState(() {
-                                willingnessTravelState = value;
-                              });
-                            },
-                          ),
-                          Text("Occasional"),
-                          RadioGroup(
-                            value: Travel_type.Occasional,
-                            groupValue: willingnessTravelState,
-                            onChange: (Travel_type value) {
-                              setState(() {
-                                willingnessTravelState = value;
-                              });
-                            },
-                          ),
-                          Text("Extensive"),
-                          RadioGroup(
-                            value: Travel_type.Extensive,
-                            groupValue: willingnessTravelState,
-                            onChange: (Travel_type value) {
-                              setState(() {
-                                willingnessTravelState = value;
-                              });
-                            },
-                          )
-                        ])
-                      ]))),
-          Card(
-              child: Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text("Work Permit for USA"),
-                        Row(children: [
-                          Text("Yes"),
-                          RadioGroup(
-                            value: Yes_No_type.Yes,
-                            groupValue: usaPermitState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                usaPermitState = value;
-                              });
-                            },
-                          ),
-                          Text("No"),
-                          RadioGroup(
-                            value: Yes_No_type.No,
-                            groupValue: usaPermitState,
-                            onChange: (Yes_No_type value) {
-                              setState(() {
-                                usaPermitState = value;
-                              });
-                            },
-                          )
-                        ])
-                      ]))),
+          Container(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Text("Have you handled a team?"),
+                    Row(children: [
+                      Text("Yes"),
+                      RadioGroup(
+                        value: Yes_No_type.Yes,
+                        groupValue: handledTeamState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            handledTeamState = value;
+                          });
+                        },
+                      ),
+                      Text("No"),
+                      RadioGroup(
+                        value: Yes_No_type.No,
+                        groupValue: handledTeamState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            handledTeamState = value;
+                          });
+                        },
+                      )
+                    ])
+                  ])),
+          Divider(color: Colors.grey),
+          Container(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text("Are you willing to work 6 days a week?"),
+                    Row(children: [
+                      Text("Yes"),
+                      RadioGroup(
+                        value: Yes_No_type.Yes,
+                        groupValue: sixDaysState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            sixDaysState = value;
+                          });
+                        },
+                      ),
+                      Text("No"),
+                      RadioGroup(
+                        value: Yes_No_type.No,
+                        groupValue: sixDaysState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            sixDaysState = value;
+                          });
+                        },
+                      )
+                    ])
+                  ])),
+          Divider(color: Colors.grey),
+          Container(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text("Are you willing to relocate?"),
+                    Row(children: [
+                      Text("Yes"),
+                      RadioGroup(
+                        value: Yes_No_type.Yes,
+                        groupValue: relocateState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            relocateState = value;
+                          });
+                        },
+                      ),
+                      Text("No"),
+                      RadioGroup(
+                        value: Yes_No_type.No,
+                        groupValue: relocateState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            relocateState = value;
+                          });
+                        },
+                      )
+                    ])
+                  ])),
+          Divider(color: Colors.grey),
+          Container(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text("Are you open to joining an early stage start-up?"),
+                    Row(children: [
+                      Text("Yes"),
+                      RadioGroup(
+                        value: Yes_No_type.Yes,
+                        groupValue: earlyStartupState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            earlyStartupState = value;
+                          });
+                        },
+                      ),
+                      Text("No"),
+                      RadioGroup(
+                        value: Yes_No_type.No,
+                        groupValue: earlyStartupState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            earlyStartupState = value;
+                          });
+                        },
+                      )
+                    ])
+                  ])),
+          Divider(color: Colors.grey),
+          Container(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text("Willingness to Travel?"),
+                    Row(children: [
+                      Text("No"),
+                      RadioGroup(
+                        value: Travel_type.No,
+                        groupValue: willingnessTravelState,
+                        onChange: (Travel_type value) {
+                          setState(() {
+                            willingnessTravelState = value;
+                          });
+                        },
+                      ),
+                      Text("Occasional"),
+                      RadioGroup(
+                        value: Travel_type.Occasional,
+                        groupValue: willingnessTravelState,
+                        onChange: (Travel_type value) {
+                          setState(() {
+                            willingnessTravelState = value;
+                          });
+                        },
+                      ),
+                      Text("Extensive"),
+                      RadioGroup(
+                        value: Travel_type.Extensive,
+                        groupValue: willingnessTravelState,
+                        onChange: (Travel_type value) {
+                          setState(() {
+                            willingnessTravelState = value;
+                          });
+                        },
+                      )
+                    ])
+                  ])),
+          Divider(color: Colors.grey),
+          Container(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text("Work Permit for USA"),
+                    Row(children: [
+                      Text("Yes"),
+                      RadioGroup(
+                        value: Yes_No_type.Yes,
+                        groupValue: usaPermitState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            usaPermitState = value;
+                          });
+                        },
+                      ),
+                      Text("No"),
+                      RadioGroup(
+                        value: Yes_No_type.No,
+                        groupValue: usaPermitState,
+                        onChange: (Yes_No_type value) {
+                          setState(() {
+                            usaPermitState = value;
+                          });
+                        },
+                      )
+                    ])
+                  ])),
         ]);
   }
 
@@ -1492,7 +1599,8 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
     );
   }
 
-  void _addJobmodalBottomSheetMenu() {
+  void _addJobmodalBottomSheetMenu(
+      {bool edit = false, Map company, int index}) {
     setState(() {
       companyNameControllerTemp = new TextEditingController();
       companyPositionControllerTemp = new TextEditingController();
@@ -1500,9 +1608,43 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
       _companyFrom_TempCtrl = new TextEditingController();
       _companyTo_TempCtrl == new TextEditingController();
       companyEmpTypeTemp = null;
-      companyEmpTypeTemp = null;
+      companytoTemp = null;
       companyFromtemp = null;
       companyCurrentTemp = false;
+      if (edit) {
+        companyNameControllerTemp = new TextEditingController();
+        companyPositionControllerTemp = new TextEditingController();
+        companyLocationControllerTemp = new TextEditingController();
+        _companyFrom_TempCtrl = new TextEditingController();
+        _companyTo_TempCtrl == new TextEditingController();
+        companyEmpTypeTemp = null;
+        companyEmpTypeTemp = null;
+        companyFromtemp = null;
+        companyCurrentTemp = false;
+
+        companyNameControllerTemp = new TextEditingController(
+            text: company[ProfileConstants.COMPANY_NAME]);
+        companyPositionControllerTemp = new TextEditingController(
+            text: company[ProfileConstants.COMPANY_POSITION]);
+        companyLocationControllerTemp = new TextEditingController(
+            text: company[ProfileConstants.COMPANY_LOCATION]);
+        _companyFrom_TempCtrl = new TextEditingController(
+            text: company[ProfileConstants.COMPANY_FROM]);
+        _companyTo_TempCtrl ==
+            new TextEditingController(
+                text: company[ProfileConstants.COMPANY_TO]);
+
+        companyEmpTypeTemp = EnumToString.fromString(
+            Emp_type.values,
+            company[ProfileConstants.COMPANY_TO]
+                .toString()
+                .replaceAll(" ", ""));
+        companytoTemp =
+            monthYearFormatter.parse(company[ProfileConstants.COMPANY_TO]);
+        companyFromtemp =
+            monthYearFormatter.parse(company[ProfileConstants.COMPANY_FROM]);
+        companyCurrentTemp = company[ProfileConstants.COMPANY_IS_CURRENT];
+      }
     });
     showDialog(
         context: context,
@@ -1626,8 +1768,8 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                           hint: "From",
                                           readonly: true,
                                           onTap: () {
-                                            _selectDate(
-                                                context, companyFromtemp,
+                                            _showDatePicker(
+                                                "From", companyFromtemp,
                                                 (DateTime d) {
                                               setState(() {
                                                 companyFromtemp = d;
@@ -1652,7 +1794,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                         hint: "To",
                                         readonly: true,
                                         onTap: () {
-                                          _selectDate(context, companytoTemp,
+                                          _showDatePicker("To", companytoTemp,
                                               (DateTime d) {
                                             setState(() {
                                               companytoTemp = d;
@@ -1695,12 +1837,18 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                       _company[ProfileConstants.COMPANY_TO] =
                                           _companyTo_TempCtrl.text;
                                       var _index = companies.length;
-                                      companies.add(_company);
-                                      _professional_listKey.currentState
-                                          .insertItem(
-                                              _index,
-                                              duration:
-                                                  Duration(milliseconds: 500));
+                                      if (edit) {
+                                        _professional_listKey.currentState
+                                            .setState(() {
+                                          companies[index] = _company;
+                                        });
+                                      } else {
+                                        companies.add(_company);
+                                        _professional_listKey.currentState
+                                            .insertItem(_index,
+                                                duration: Duration(
+                                                    milliseconds: 500));
+                                      }
                                     });
                                     Navigator.pop(context);
                                   },
@@ -1742,12 +1890,20 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
         pageBuilder: (context, animation1, animation2) {});
   }
 
-  void _addLanguagemodalBottomSheetMenu() {
+  void _addLanguagemodalBottomSheetMenu(
+      {bool edit = false, Map language, int index}) {
     setState(() {
       languageNameTemp = new TextEditingController();
       speakTemp = false;
       readTemp = false;
       writeTemp = false;
+      if (edit) {
+        languageNameTemp = new TextEditingController(
+            text: language[ProfileConstants.LANGUAGE_NAME]);
+        speakTemp = language[ProfileConstants.LANGUAGE_SPEAK];
+        readTemp = language[ProfileConstants.LANGUAGE_READ];
+        writeTemp = language[ProfileConstants.LANGUAGE_WRITE];
+      }
     });
     showDialog(
         context: context,
@@ -1865,7 +2021,11 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                           .LANGUAGE_WRITE] = writeTemp;
                                       language[ProfileConstants
                                           .LANGUAGE_SPEAK] = speakTemp;
-                                      languages.add(language);
+                                      if (edit) {
+                                        languages[index] = language;
+                                      } else {
+                                        languages.add(language);
+                                      }
                                     });
 
                                     Navigator.pop(context);
@@ -1883,7 +2043,8 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
         });
   }
 
-  void _addCollegemodalBottomSheetMenu() {
+  void _addCollegemodalBottomSheetMenu(
+      {bool edit = false, Map college, int index}) {
     setState(() {
       collegeNameControllerTemp = new TextEditingController();
       collegeDegreeControllerTemp = new TextEditingController();
@@ -1893,6 +2054,28 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
       collegeCourseTypeTemp = null;
       collegeFromTemp = null;
       collegeToTemp = null;
+
+      if (edit) {
+        collegeNameControllerTemp = new TextEditingController(
+            text: college[ProfileConstants.COLLEGE_NAME]);
+        collegeDegreeControllerTemp = new TextEditingController(
+            text: college[ProfileConstants.COLLEGE_DEGREE]);
+        collegeFieldOfStudyControllerTemp = new TextEditingController(
+            text: college[ProfileConstants.COLLEGE_FIELD_OF_STUDY]);
+        _collegeFrom_TempCtrl = new TextEditingController(
+            text: college[ProfileConstants.COLLEGE_FROM]);
+        _collegeTo_TempCtrl = new TextEditingController(
+            text: college[ProfileConstants.COLLEGE_TO]);
+        collegeCourseTypeTemp = EnumToString.fromString(
+            Course_type.values,
+            college[ProfileConstants.COLLEGE_COURSE_TYPE]
+                .toString()
+                .replaceAll(" ", ""));
+        collegeFromTemp =
+            monthYearFormatter.parse(college[ProfileConstants.COLLEGE_FROM]);
+        collegeToTemp =
+            monthYearFormatter.parse(college[ProfileConstants.COLLEGE_TO]);
+      }
     });
     showDialog(
         context: context,
@@ -2008,8 +2191,8 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                           hint: "From",
                                           readonly: true,
                                           onTap: () {
-                                            _selectDate(
-                                                context, collegeFromTemp,
+                                            _showDatePicker(
+                                                "From", collegeFromTemp,
                                                 (DateTime d) {
                                               setState(() {
                                                 collegeFromTemp = d;
@@ -2034,7 +2217,7 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                         hint: "To",
                                         readonly: true,
                                         onTap: () {
-                                          _selectDate(context, collegeToTemp,
+                                          _showDatePicker("To", collegeToTemp,
                                               (DateTime d) {
                                             setState(() {
                                               collegeToTemp = d;
@@ -2075,11 +2258,18 @@ class _ProfileCreationPageState extends State<ProfileCreationPage> {
                                       _college[ProfileConstants.COLLEGE_TO] =
                                           _collegeTo_TempCtrl.text;
                                       var _index = colleges.length;
-                                      colleges.add(_college);
-                                      _educational_listKey.currentState
-                                          .insertItem(_index,
-                                              duration:
-                                                  Duration(milliseconds: 500));
+                                      if (edit)
+                                        _educational_listKey.currentState
+                                            .setState(() {
+                                          colleges[index] = _college;
+                                        });
+                                      else {
+                                        colleges.add(_college);
+                                        _educational_listKey.currentState
+                                            .insertItem(_index,
+                                                duration: Duration(
+                                                    milliseconds: 500));
+                                      }
                                     });
                                     Navigator.pop(context);
                                   },

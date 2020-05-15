@@ -1,28 +1,33 @@
+import 'package:ReferAll/PushNotificationManager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:getreferred/ForgotPassword.dart';
-import 'package:getreferred/Home.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
-import 'package:getreferred/helper/UiUtilt.dart';
-import 'package:getreferred/helper/sizeConfig.dart';
-import 'package:getreferred/model/ProfileModel.dart';
-import 'package:getreferred/registerPage.dart';
-import 'package:getreferred/widget/CustomButton.dart';
-import 'package:getreferred/widget/CustomDialog.dart';
-import 'package:getreferred/widget/CustomTextField.dart';
+import 'package:ReferAll/BLoc/ProfileProvider.dart';
+import 'package:ReferAll/ForgotPassword.dart';
+import 'package:ReferAll/Home.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
+import 'package:ReferAll/helper/UiUtilt.dart';
+import 'package:ReferAll/helper/sizeConfig.dart';
+import 'package:ReferAll/model/ProfileModel.dart';
+import 'package:ReferAll/registerPage.dart';
+import 'package:ReferAll/widget/CustomButton.dart';
+import 'package:ReferAll/widget/CustomDialog.dart';
+import 'package:ReferAll/widget/CustomTextField.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:getreferred/profileCreationPage.dart';
+import 'package:ReferAll/profileCreationPage.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final _loginGlobalKey = GlobalKey<ScaffoldState>();
+final GlobalKey<ScaffoldState> _loginGlobalKey = GlobalKey<ScaffoldState>();
 
-final _loginFormKey = GlobalKey<FormState>();
+final GlobalKey<FormState> _loginFormKey = GlobalKey<FormState>();
 
 class LoginPage extends StatefulWidget {
   @override
@@ -31,12 +36,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
+  PushNotificationsManager pushNotificationsManager =
+      PushNotificationsManager();
   String _email;
   bool _loading;
   String _password;
   bool _autoValidate = false;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  ProfileProvider profileProvider;
   AnimationController controller;
   Animation colorAnimation;
   final storage = new FlutterSecureStorage();
@@ -67,6 +73,7 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    profileProvider = Provider.of<ProfileProvider>(context);
     SizeConfig().init(context);
     return Scaffold(
         key: _loginGlobalKey,
@@ -100,12 +107,11 @@ class _LoginPageState extends State<LoginPage>
                           Container(
                             child: Text(
                               "Welcome to",
-                              style: TextStyle(
-                                fontFamily: 'RobotoRegular',
+                              style: GoogleFonts.lato(
                                 fontSize: SizeConfig.blockSizeHorizontal * 8,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xff000000),
-                              ), //textstyle
+                              ), //GoogleFonts.lato
                             ),
                           ), //padding
                           Row(
@@ -113,21 +119,19 @@ class _LoginPageState extends State<LoginPage>
                             children: <Widget>[
                               Text(
                                 "Refer",
-                                style: TextStyle(
-                                  fontFamily: 'RobotoRegular',
+                                style: GoogleFonts.lato(
                                   fontSize: SizeConfig.blockSizeHorizontal * 8,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
-                                ), //textstyle
+                                ), //GoogleFonts.lato
                               ),
                               Text(
                                 "All",
-                                style: TextStyle(
-                                  fontFamily: 'RobotoRegular',
+                                style: GoogleFonts.lato(
                                   fontSize: SizeConfig.blockSizeHorizontal * 8,
                                   fontWeight: FontWeight.bold,
                                   foreground: UIUtil.getTextGradient(),
-                                ), //textstyle
+                                ), //GoogleFonts.lato
                               ),
                             ],
                           ),
@@ -145,12 +149,11 @@ class _LoginPageState extends State<LoginPage>
                           padding: EdgeInsets.only(top: 5.0, bottom: 5),
                           child: Text(
                             "Please sign in to your account",
-                            style: TextStyle(
-                              fontFamily: 'RobotoRegular',
-                              fontSize: SizeConfig.blockSizeHorizontal * 3,
-                              fontWeight: FontWeight.w200,
+                            style: GoogleFonts.lato(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                               color: Color(0xff000000),
-                            ), //textstyle
+                            ), //GoogleFonts.lato
                           ),
                         ), //padding
                         Form(
@@ -254,16 +257,14 @@ class _LoginPageState extends State<LoginPage>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text("Not a member yet?",
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
+                                    style: GoogleFonts.lato(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w300,
                                       color: Color(0xff000000),
                                     )),
                                 InkWell(
                                   child: Text(" Register",
-                                      style: TextStyle(
-                                          fontFamily: 'Montserrat',
+                                      style: GoogleFonts.lato(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                           foreground:
@@ -305,14 +306,15 @@ class _LoginPageState extends State<LoginPage>
                         Expanded(
                             child: Text(
                           quots[4],
-                          style: TextStyle(
+                          style: GoogleFonts.lato(
                               fontStyle: FontStyle.normal,
                               fontSize: 20,
                               fontWeight: FontWeight.w300,
                               color: Colors.grey),
                         ))
                       ],
-                    )
+                    ),
+                    CircularProgressIndicator()
                   ],
                 ),
               ),
@@ -340,7 +342,7 @@ class _LoginPageState extends State<LoginPage>
     //                 Expanded(
     //                     child: Text(
     //                   quots[4],
-    //                   style: TextStyle(
+    //                   style: GoogleFonts.lato(
     //                       fontStyle: FontStyle.normal,
     //                       fontSize: 20,
     //                       fontWeight: FontWeight.w300,
@@ -356,49 +358,64 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _signInWithGoogle() async {
-    final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    final FirebaseUser user =
-        (await _auth.signInWithCredential(credential)).user;
-    assert(user.email != null);
-    assert(user.displayName != null);
-    assert(!user.isAnonymous);
-    assert(await user.getIdToken() != null);
-
-    final FirebaseUser currentUser = await _auth.currentUser();
-    assert(user.uid == currentUser.uid);
     setState(() {
-      if (user != null) {
-        // _success = true;
-        // _userID = user.uid;
-      } else {
-        // _success = false;
-      }
+      _loading = true;
     });
+    String token = await pushNotificationsManager.init();
+    var data = await profileProvider.signInWithGoogle(token);
+
+    if (!data['hasError']) {
+      if (data['signUp']) {
+        Get.off(ProfileCreationPage());
+      } else {
+        Get.off(Home());
+      }
+    } else {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  void displayDialog(String title, String message, List<Widget> actions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => new CupertinoAlertDialog(
+        title: new Text(title),
+        content: new Text(message),
+        actions: actions,
+      ),
+    );
   }
 
   void _signInWithEmailAndPassword() async {
-    FirebaseUser user;
-    try {
-      user = (await _auth.signInWithEmailAndPassword(
-        email: _email,
-        password: _password,
-      ))
-          .user;
-    } on PlatformException catch (e) {
-      print(e);
-      switch (e.code) {
+    String token = await pushNotificationsManager.init();
+    var data = await profileProvider.signInWithEmailAndPassword(
+        _email, _password, token);
+    if (!data['hasError']) {
+      Get.off(Home());
+    } else {
+      switch (data['error']) {
         case "ERROR_WRONG_PASSWORD":
           {
             setState(() {
               _loading = false;
             });
-            wrongPasswordError();
+            displayDialog("Password incorrect",
+                "Please try again or use forget password", [
+              CupertinoDialogAction(
+                  onPressed: () {
+                    Get.to(ForgotPassword());
+                  },
+                  isDefaultAction: true,
+                  child: new Text("Forgot Password")),
+              CupertinoDialogAction(
+                  onPressed: () {
+                    Get.back();
+                  },
+                  isDefaultAction: true,
+                  child: new Text("Close"))
+            ]);
           }
           break;
         case "ERROR_USER_NOT_FOUND":
@@ -406,47 +423,24 @@ class _LoginPageState extends State<LoginPage>
             setState(() {
               _loading = false;
             });
-            notRegisteredError();
+            displayDialog("Email not registered",
+                "Please check the email address or register", [
+              CupertinoDialogAction(
+                  onPressed: () {
+                    Get.to(RegisterPage());
+                  },
+                  isDefaultAction: true,
+                  child: new Text("Register")),
+              CupertinoDialogAction(
+                  onPressed: () {
+                    Get.back();
+                  },
+                  isDefaultAction: true,
+                  child: new Text("Close"))
+            ]);
           }
           break;
       }
-    }
-    if (user != null) {
-      Firestore.instance
-          .collection('users')
-          .where(ProfileConstants.EMAIL, isEqualTo: _email)
-          .getDocuments()
-          .then((data) {
-        setState(() {
-          // _success = true;
-          // _userEmail = user.email;
-          final _profileModel =
-              Provider.of<ProfileModel>(context, listen: false);
-
-          _profileModel.setValue(
-              ProfileConstants.USERNAME, data.documents[0].documentID);
-          _profileModel.setAll(data.documents[0].data);
-
-          storage
-              .write(
-                  key: ProfileConstants.USERNAME,
-                  value: data.documents[0].documentID)
-              .then((s) {
-            Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Home(),
-                ),
-                ModalRoute.withName("/Home"));
-          });
-        });
-      });
-    } else {
-      setState(() {
-        _loading = false;
-      });
-      print("Failed");
-      // _success = false;
     }
   }
 
@@ -462,7 +456,7 @@ class _LoginPageState extends State<LoginPage>
               },
               child: Text(
                 "Cancel",
-                style: TextStyle(color: Colors.green[800], fontSize: 18),
+                style: GoogleFonts.lato(color: Colors.green[800], fontSize: 18),
               )),
           InkWell(
             onTap: () {
@@ -473,7 +467,7 @@ class _LoginPageState extends State<LoginPage>
             },
             child: Text(
               "Forgot password?",
-              style: TextStyle(color: Colors.green[800], fontSize: 18),
+              style: GoogleFonts.lato(color: Colors.green[800], fontSize: 18),
             ),
           )
         ],
@@ -493,7 +487,7 @@ class _LoginPageState extends State<LoginPage>
               },
               child: Text(
                 "Cancel",
-                style: TextStyle(color: Colors.green[800], fontSize: 18),
+                style: GoogleFonts.lato(color: Colors.cyan, fontSize: 18),
               )),
           InkWell(
             onTap: () {
@@ -504,7 +498,7 @@ class _LoginPageState extends State<LoginPage>
             },
             child: Text(
               "Register",
-              style: TextStyle(color: Colors.green[800], fontSize: 18),
+              style: GoogleFonts.lato(color: Colors.cyan, fontSize: 18),
             ),
           )
         ],

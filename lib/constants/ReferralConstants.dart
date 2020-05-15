@@ -3,6 +3,9 @@ class ReferralConstants {
   static final String REFERRAL_AUTHOR = "author";
   static final String NUM_COMMENTS = "numComments";
   static final String NUM_SHARES = "numShares";
+  static final String PUSH_TOKEN = "token";
+  static final String BOOKMARKS = "bookmarks";
+  static final String REQUESTER_IDS = "requester_ids";
   static final String NUM_APPLIED = "numApplied";
   static final String ROLE = "role";
   static final String COMPANY = "company";
@@ -23,4 +26,11 @@ class ReferralConstants {
   static final String HIDE = "hide";
   static final String JD_TYPE_LINK = "link";
   static final String JD_TYPE_PASTE = "paste";
+  static const String REQUESTS_NUM = "requestNum";
+  static const String ACCEPTED_NUM = "acceptedNum";
+  static const String REFERRED_NUM = "referredNum";
+  static const String INTERVIEWED_NUM = "interviewedNum";
+  static const String HIRED_NUM = "hiredNum";
+  static const String CLOSED_NUM = "closedNum";
+  static const String PENDING_ACTION_NUM = "pendingActionNum";
 }

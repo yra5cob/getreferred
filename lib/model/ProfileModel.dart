@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:getreferred/constants/ProfileConstants.dart';
+import 'package:ReferAll/constants/ProfileConstants.dart';
 
 class ProfileModel extends ChangeNotifier {
   Map<String, dynamic> model = {
@@ -7,11 +7,13 @@ class ProfileModel extends ChangeNotifier {
       ProfileConstants.FIRST_NAME: '',
       ProfileConstants.LAST_NAME: ''
     },
+    ProfileConstants.PUSH_TOKEN: '',
     ProfileConstants.USERNAME: '',
     ProfileConstants.EMAIL: '',
     ProfileConstants.PROFILE_PIC_URL: '',
     ProfileConstants.COUNTRY_CODE: '',
     ProfileConstants.PHONE: '',
+    ProfileConstants.COVER_URL: '',
     ProfileConstants.DOB: '',
     ProfileConstants.RESUME: '',
     ProfileConstants.GENDER: '',
